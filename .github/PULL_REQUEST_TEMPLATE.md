@@ -8,7 +8,7 @@
 
 ## What type of PR is this? (check all applicable)
 
-- [ ] 🍕 Feature
+- [ ] ✨ Feature
 - [ ] 🐛 Bug Fix / Performance
 - [ ] 📝 Documentation Update
 - [ ] 🧑‍💻 Refactor / Style

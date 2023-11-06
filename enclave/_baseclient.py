@@ -41,20 +41,25 @@ class BaseClient:
 
         return self.s.request(method, url, data=body, headers=headers, timeout=timeout)
 
-    def _get(
+    def get(
         self, path: str, body: str = "", headers: dict = None, timeout: float = DEFAULT_TIMEOUT
     ) -> requests.Response:
         return self._request(models.GET, path, body, headers, timeout)
 
-    def _post(
+    def post(
         self, path: str, body: str = "", headers: dict = None, timeout: float = DEFAULT_TIMEOUT
     ) -> requests.Response:
         return self._request(models.POST, path, body, headers, timeout)
 
-    def _delete(
+    def delete(
         self, path: str, body: str = "", headers: dict = None, timeout: float = DEFAULT_TIMEOUT
     ) -> requests.Response:
         return self._request(models.DELETE, path, body, headers, timeout)
+
+    def put(
+        self, path: str, body: str = "", headers: dict = None, timeout: float = DEFAULT_TIMEOUT
+    ) -> requests.Response:
+        return self._request(models.PUT, path, body, headers, timeout)
 
 
 class ApiAuth(requests.auth.AuthBase):

@@ -10,3 +10,4 @@ VERBS: Final[Set[str]] = {GET, POST, DELETE, PUT}
 
 DEV: Final[str] = "https://api-dev.enclavemarket.dev"
 PROD: Final[str] = "https://api.enclave.market"
+SANDBOX: Final[str] = "https://api-sandbox.enclave.market"

@@ -30,6 +30,7 @@ class Client:
         return cls(api_key, api_secret, base_url)
 
     # Common REST API
+    # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
     # https://enclave-markets.notion.site/Common-REST-API-9d546fa6282b4bad87ef43d189b9071b
 
     def authed_hello(self) -> requests.Response:
@@ -38,9 +39,12 @@ class Client:
         `GET /authedHello`
 
         Returns:
-            `{'success': true, 'result': 'ACCOUNT_ID'}`
-
-        We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
+        ```
+        {
+            "result": "ACCOUNT_ID",
+            "success": true
+        }
+        ```
 
         Requires: view."""
 
@@ -52,372 +56,109 @@ class Client:
         `GET /v0/address_book`
 
         Returns:
-            `{
-            'success': true,
-            'result': {"addressBook": ["0xabc...", "0x123..." ]}
-            }`
+        ```
+        {
+            "result": {
+                "addressBook": [
+                    "0xabc...",
+                    "0x123..."
+                ]
+            },
+            "success": true
+        }
+        ```
 
-
-        Requires: view.
-        """
+        Requires: view."""
 
         return self.baseclient.get("/v0/address_book")
 
     def get_markets(self) -> requests.Response:
         """Make a request to the markets endpoint, returns the markets tradeable by the user.
 
-                `GET /v1/markets`
+        `GET /v1/markets`
 
-                Returns:
-                `{
-                "success": true,
-           "result": {
-              "cross": {
-                 "tradingPairs": [
+        Returns:
+        ```
+        {
+            "result": {
+                "cross": {
+                    "tradingPairs": [
+                        {
+                            "pair": {
+                                "base": "AVAX",
+                                "quote": "USDC"
+                            },
+                            "decimalPlaces": 6
+                        },
+                        {
+                            "pair": {
+                                "base": "AAVE",
+                                "quote": "USDC"
+                            },
+                            "decimalPlaces": 6
+                        }
+                    ]
+                },
+                "spot": {
+                    "tradingPairs": [
+                        {
+                            "pair": {
+                                "base": "AVAX",
+                                "quote": "USDC"
+                            },
+                            "baseIncrement": "0.001",
+                            "quoteIncrement": "0.01"
+                        },
+                        {
+                            "pair": {
+                                "base": "AVAX",
+                                "quote": "ETH"
+                            },
+                            "baseIncrement": "0.001",
+                            "quoteIncrement": "0.000001"
+                        }
+                    ]
+                },
+                "tokenConfig": [
                     {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
+                        "id": "AVAX",
+                        "name": "Avalanche",
+                        "decimals": 6,
+                        "network": "avalanche",
+                        "assetType": "native",
+                        "nativeAssetName": "avalanche",
+                        "coinGeckoId": "avalanche-2",
+                        "coinGeckoCurrency": "",
+                        "bridgeInfoUrl": "",
+                        "description": "",
+                        "minOrderSize": "0.01",
+                        "maxOrderSize": "28819"
                     },
                     {
-                       "pair": {
-                          "base": "AAVE",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "BTC.b",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "ETH",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "LINK",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "WBTC",
-                          "quote": "USDC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "USDCa"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "BTC.b",
-                          "quote": "USDCa"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "ETH",
-                          "quote": "USDCa"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "WBTC",
-                          "quote": "USDCa"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "ETH"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "BTC.b"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "WBTC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AAVE",
-                          "quote": "AVAX"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AAVE",
-                          "quote": "BTC.b"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "AAVE",
-                          "quote": "ETH"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "ETH",
-                          "quote": "BTC.b"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "ETH",
-                          "quote": "WBTC"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "LINK",
-                          "quote": "AVAX"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "LINK",
-                          "quote": "BTC.b"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "LINK",
-                          "quote": "ETH"
-                       },
-                       "decimalPlaces": 6
-                    },
-                    {
-                       "pair": {
-                          "base": "WOOL",
-                          "quote": "ETH"
-                       },
-                       "decimalPlaces": 6
+                        "id": "USDC",
+                        "name": "USD Coin",
+                        "decimals": 2,
+                        "network": "ethereum",
+                        "assetType": "native",
+                        "nativeAssetName": "",
+                        "coinGeckoId": "usd-coin",
+                        "coinGeckoCurrency": "usd",
+                        "bridgeInfoUrl": "",
+                        "description": "",
+                        "minOrderSize": "0.01",
+                        "maxOrderSize": "500000"
                     }
-                 ]
-              },
-              "spot": {
-                 "tradingPairs": [
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "USDC"
-                       },
-                       "baseIncrement": "0.001",
-                       "quoteIncrement": "0.01"
-                    },
-                    {
-                       "pair": {
-                          "base": "AVAX",
-                          "quote": "ETH"
-                       },
-                       "baseIncrement": "0.001",
-                       "quoteIncrement": "0.000001"
-                    },
-                    {
-                       "pair": {
-                          "base": "ETH",
-                          "quote": "USDC"
-                       },
-                       "baseIncrement": "0.00001",
-                       "quoteIncrement": "1"
-                    },
-                    {
-                       "pair": {
-                          "base": "WBTC",
-                          "quote": "USDC"
-                       },
-                       "baseIncrement": "0.000001",
-                       "quoteIncrement": "1"
-                    }
-                 ]
-              },
-              "tokenConfig": [
-                 {
-                    "id": "AVAX",
-                    "name": "Avalanche",
-                    "decimals": 6,
-                    "network": "avalanche",
-                    "assetType": "native",
-                    "nativeAssetName": "avalanche",
-                    "coinGeckoId": "avalanche-2",
-                    "coinGeckoCurrency": "",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.01",
-                    "maxOrderSize": "28819"
-                 },
-                 {
-                    "id": "ETH",
-                    "name": "Ethereum",
-                    "decimals": 6,
-                    "network": "ethereum",
-                    "assetType": "native",
-                    "nativeAssetName": "ethereum",
-                    "coinGeckoId": "ethereum",
-                    "coinGeckoCurrency": "eth",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.001",
-                    "maxOrderSize": "328"
-                 },
-                 {
-                    "id": "USDC",
-                    "name": "USD Coin",
-                    "decimals": 2,
-                    "network": "ethereum",
-                    "assetType": "native",
-                    "nativeAssetName": "",
-                    "coinGeckoId": "usd-coin",
-                    "coinGeckoCurrency": "usd",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.01",
-                    "maxOrderSize": "500000"
-                 },
-                 {
-                    "id": "LINK",
-                    "name": "Chainlink",
-                    "decimals": 6,
-                    "network": "ethereum",
-                    "assetType": "native",
-                    "nativeAssetName": "chainlink",
-                    "coinGeckoId": "chainlink",
-                    "coinGeckoCurrency": "link",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.01",
-                    "maxOrderSize": "71650"
-                 },
-                 {
-                    "id": "WBTC",
-                    "name": "Wrapped Bitcoin",
-                    "decimals": 6,
-                    "network": "ethereum",
-                    "assetType": "wrapped",
-                    "nativeAssetName": "bitcoin",
-                    "coinGeckoId": "wrapped-bitcoin",
-                    "coinGeckoCurrency": "btc",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.001",
-                    "maxOrderSize": "25"
-                 },
-                 {
-                    "id": "AAVE",
-                    "name": "Aave",
-                    "decimals": 6,
-                    "network": "ethereum",
-                    "assetType": "native",
-                    "nativeAssetName": "aave",
-                    "coinGeckoId": "aave",
-                    "coinGeckoCurrency": "aave",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.001",
-                    "maxOrderSize": "1250"
-                 },
-                 {
-                    "id": "USDCa",
-                    "name": "USD Coin on Avalanche",
-                    "decimals": 2,
-                    "network": "avalanche",
-                    "assetType": "native",
-                    "nativeAssetName": "United States Dollar",
-                    "coinGeckoId": "usd-coin",
-                    "coinGeckoCurrency": "usd",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "0.01",
-                    "maxOrderSize": "500000"
-                 },
-                 {
-                    "id": "BTC.b",
-                    "name": "Bridged Bitcoin",
-                    "decimals": 4,
-                    "network": "avalanche",
-                    "assetType": "bridged",
-                    "nativeAssetName": "bitcoin",
-                    "coinGeckoId": "wrapped-bitcoin",
-                    "coinGeckoCurrency": "btc",
-                    "bridgeInfoUrl": "https://support.avax.network/en/articles/6081464-core-extension-how-do-i-bridge-bitcoin-btc",
-                    "description": "Bitcoin that is bridged to the Avalanche network",
-                    "minOrderSize": "0.001",
-                    "maxOrderSize": "25"
-                 },
-                 {
-                    "id": "WOOL",
-                    "name": "Wolf Game Wool",
-                    "decimals": 6,
-                    "network": "ethereum",
-                    "assetType": "native",
-                    "nativeAssetName": "wool",
-                    "coinGeckoId": "wool",
-                    "coinGeckoCurrency": "wool",
-                    "bridgeInfoUrl": "",
-                    "description": "",
-                    "minOrderSize": "100",
-                    "maxOrderSize": "100000000"
-                 }
-              ],
-              "blockchainNetwork": [
-                 {
-                    "type": "ethereum",
-                    "coin": "ETH",
-                    "testnetName": "Ethereum Goerli testnet",
-                    "mainnetName": "Ethereum mainnet",
-                    "testnetBlockExplorerBaseUrl": "https://goerli.etherscan.io",
-                    "mainnetBlockExplorerBaseUrl": "https://etherscan.io"
-                 },
-                 {
-                    "type": "avalanche",
-                    "coin": "AVAX",
-                    "testnetName": "Avalanche Fuji testnet",
-                    "mainnetName": "Avalanche mainnet",
-                    "testnetBlockExplorerBaseUrl": "https://testnet.snowtrace.io",
-                    "mainnetBlockExplorerBaseUrl": "https://snowtrace.io"
-                 }
-              ]
-           }
-        }`
+                ]
+            },
+            "success": true
+        }
+        ```
+
         Requires: view."""
+
         return self.baseclient.get("/v1/markets")
 
-    def get_coin_balance(self, coin: str) -> requests.Response:
+    def get_balance(self, coin: str) -> requests.Response:
         """Gets balance of a specific asset.
 
         `POST /v0/get_balance`
@@ -427,18 +168,20 @@ class Client:
         symbol: str, required.
 
         Response:
-        `{"success": true
-        "result": {
-        "accountId": "5577006791947779410",
-        "freeBalance": "3000",
-        "reservedBalance": "7000",
-        "symbol": "AVAX",
-        "totalBalance": "10000"
-        },
-        }`
+        ```
+        {
+            "result": {
+                "accountId": "5577006791947779410",
+                "freeBalance": "3000",
+                "reservedBalance": "7000",
+                "symbol": "AVAX",
+                "totalBalance": "10000"
+            },
+            "success": true
+        }
+        ```
 
-        Requires: view.
-        """
+        Requires: view."""
 
         body = f'{{ "symbol": "{coin}" }}'
         return self.baseclient.post("/v0/get_balance", body=body)
@@ -449,31 +192,74 @@ class Client:
         `GET /v0/wallet/balances`
 
         Response:
-        `{ "success": true,
-        "result": [
-        { "coin": "AVAX", free": "3000", "reserved": "7000", "total": "10000", "usdValue": "150000"},
-        {"coin": "AAVE", "total": "0", "reserved": "0", "free": "0", "usdValue": "0"}
-        ]
-        }`
-        """
+        ```
+        {
+            "result": [
+                {
+                    "coin": "AVAX", free": "3000", "reserved": "7000", "total": "10000", "usdValue": "150000"
+                },
+                {
+                    "coin": "AAVE", "total": "0", "reserved": "0", "free": "0", "usdValue": "0"
+                }
+            ],
+            "success": true
+        }
+        ```
+
+        Requires: view."""
 
         return self.baseclient.get("/v0/wallet/balances")
 
     def get_deposit_addresses(self, coins: List[str]) -> requests.Response:
-        """Gets all provisioned addresses for an account.
+        """Gets all provisioned addresses for the coins for an account.
 
         `POST /v0/wallet/deposit_address/list`
 
-        """
-        body = f'{{ "coins": "{coins}" }}'
-        return self.baseclient.post("/v0/get_balance", body=body)
+        Response:
+        ```
+        {
+            "result": [
+                {
+                    "address": "0x123...", "coin": "AVAX"
+                },
+                {
+                    "address": "0xabc...", "coin": "USDC"
+                }
+            ],
+            "success": true
+        }
+        ```
+
+                Requires: view."""
+
+        body = f'{{ "coins": {coins} }}'
+        return self.baseclient.post("/v0/wallet/deposit_address/list", body=body)
 
     def get_deposits(self) -> requests.Response:
         """Gets all deposits for an account.
         Reverse chronological array encapsulated in generic response wrapper.
 
         `GET /v0/wallet/deposits`
-        """
+
+        Response:
+        ```
+        {
+            "result": [
+                {
+                    "coin": "AVAX", "currentConfirmations": 25, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
+                    "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0x123abc..."
+                },
+                {
+                    "coin": "AVAX", "currentConfirmations": 10, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
+                    "time": "2019-04-05T09:56:55.728933+00:00", "txid": "0xabc123..."
+                }
+            ],
+            "success": true
+        }
+        ```
+
+        Requires: view."""
+
         return self.baseclient.get("/v0/wallet/deposits")
 
     def get_deposit(self, txid: str) -> requests.Response:
@@ -481,20 +267,36 @@ class Client:
 
         `GET /v0/wallet/deposits/<TxID>`
 
-        """
+        Response:
+        ```
+        {
+            "result": {
+                "coin": "AVAX", "currentConfirmations": 25, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
+                "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0x123abc..."
+            },
+            "success": true
+        }
+        ```
+
+        Requires: view."""
+
         return self.baseclient.get(f"/v0/wallet/deposits/{txid}")
 
     # TODO: this is a case where we could have validation. like to check if end is after start and nothing is negative or zero?
+    # TODO: this is a response that can't be json encoded by the base class
     def get_deposits_csv(
-        self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None  # `*` enforces keyword only arguments
-    ) -> requests.Response:  # TODO: this is a response that can't be json encoded by the base class
+        self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
+    ) -> requests.Response:
+        # `*` enforces keyword only arguments
         """Gets deposits for an account within the start and end times
 
         `POST /v0/wallet/deposits/csv`
 
         Response:
         `CSV formatted text, sorted reverse chronologically`
-        """
+
+        Requires: view."""
+
         body = {}
         if start_secs is not None:
             body["start_time"] = start_secs
@@ -506,7 +308,25 @@ class Client:
         """Gets all withdrawals for an account.
 
         `GET /v0/wallet/withdrawals`
-        """
+
+        Response:
+        ```
+        {
+            "result": [
+                {
+                    "address": "0x123abc...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
+                    "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0xabc123...", "withdrawal_id": "1a2b3c..."
+                },
+                {
+                    "address": "0x456def...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
+                    "time": "2019-04-05T09:56:55.728933+00:00", "txid": "0xdef456...", "withdrawal_id": "4d5e6f..."
+                }
+            ],
+            "success": true
+        }
+        ```
+
+        Requires: view."""
 
         return self.baseclient.get("/v0/wallet/withdrawals")
 
@@ -514,7 +334,19 @@ class Client:
         """Gets a withdrawal by transaction ID.
 
         `GET /v0/wallet/withdrawals/<TxID>`
-        """
+
+        Response:
+        ```
+        {
+            "result": {
+                "address": "0x123abc...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
+                "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0xabc123...", "withdrawal_id": "1a2b3c..."
+            },
+            "success": true
+        }
+        ```
+
+        Requires: view."""
 
         return self.baseclient.get(f"/v0/wallet/withdrawals/{txid}")
 
@@ -523,7 +355,12 @@ class Client:
     ) -> requests.Response:
         """Gets withdrawals for an account within the start and end times
 
-        POST /v0/wallet/withdrawals/csv"""
+        `POST /v0/wallet/withdrawals/csv`
+
+        Response:
+        `CSV formatted text, sorted reverse chronologically`
+
+        Requires: view."""
 
         body = {}
         if start_secs is not None:
@@ -538,8 +375,20 @@ class Client:
         `POST /v0/provision_address`
 
         Request:
-        `{"coin": "AVAX"}`
-        """
+        `{"symbol": "AVAX"}`
+
+        Response:
+        ```
+        {
+            "result": {
+                "accountId": "5572106791847779410", "address": "0x074B94d653CBf65D1Bc484F6D41897b38250fbfF", "symbol": "AVAX"
+            },
+            "success": true
+        }
+        ```
+
+        Requires: view + transfer."""
+
         body = f'{{ "symbol": "{coin}" }}'
         return self.baseclient.post("/v0/provision_address", body=body)
 
@@ -547,7 +396,31 @@ class Client:
         """Initiates a withdrawal
 
         `POST /v0/withdraw`
-        """
+
+        Request:
+        ```
+        {
+            "address": "0x074B94d653CBf65D1Bc484F6D41897b38250fbfF",
+            "amount": "10",
+            "customer_withdrawal_id": "abc123",
+            "symbol": "AVAX"
+        }
+        ```
+
+        Response:
+        ```
+        {
+            "result": {
+                "customer_withdrawal_id": "abc123",
+                "withdrawal_id": "41ff4b35112ccfa3e466f302c914f323f5687e048a8e2fd82bcdcdcb9eb47571",
+                "withdrawal_status": "WITHDRAWAL_PENDING",
+            },
+            "success": true
+        }
+        ```
+
+        Requires: view + transfer."""
+
         body = {}
         body.update(
             {

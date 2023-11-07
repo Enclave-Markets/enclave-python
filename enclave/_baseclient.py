@@ -1,4 +1,3 @@
-# %%
 """
 BaseClient handles basic requests and auth that are common across Spot, Perps, and Cross.
 """

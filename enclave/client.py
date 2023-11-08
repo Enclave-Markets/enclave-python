@@ -1,5 +1,8 @@
 """
-Client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests to each.
+client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests.
+
+The Client class is the intended way to interface with the SDK.
+Modules beginning with an underscore such as _spot are not intended to be used directly.
 """
 import json
 import os

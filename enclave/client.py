@@ -3,6 +3,7 @@ Client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to 
 """
 import json
 import os
+import time
 from decimal import Decimal
 from typing import List, Optional, Union
 
@@ -34,6 +35,19 @@ class Client:
     # Common REST API
     # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
     # https://enclave-markets.notion.site/Common-REST-API-9d546fa6282b4bad87ef43d189b9071b
+
+    def wait(self, sleep_time: float = 1, fail_after: float = 10) -> bool:
+        """Wait for the API to be ready, sleeping for `sleep_time` seconds between requests (default 1).
+        Optional fail after `fail_after` seconds (default 10).
+
+        Returns True if the API is ready, False if it timed out.
+        """
+        start = time.time()
+        while not (self.bc.get("/status").ok):
+            if time.time() - start > fail_after:
+                return False
+            time.sleep(sleep_time)
+        return True
 
     def authed_hello(self) -> Res:
         """Make a request to the authed hello endpoint.

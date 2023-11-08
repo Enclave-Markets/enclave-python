@@ -7,7 +7,7 @@ import hashlib
 import hmac
 import time
 import urllib.parse as urlparse
-from typing import Any, Dict, Final, List, Optional, Tuple, Union
+from typing import Final, Optional
 
 import requests
 import requests.auth

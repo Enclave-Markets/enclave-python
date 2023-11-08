@@ -7,7 +7,7 @@ import hashlib
 import hmac
 import time
 import urllib.parse as urlparse
-from typing import Final, Optional
+from typing import Any, Dict, Final, List, Optional, Tuple, Union
 
 import requests
 import requests.auth
@@ -15,6 +15,8 @@ import requests.auth
 from . import models
 
 DEFAULT_TIMEOUT_SECS: Final[float] = 10
+
+OptDict = Optional[dict]
 
 
 class BaseClient:
@@ -24,13 +26,15 @@ class BaseClient:
         self._base_url = base_url
         self.s = requests.Session()
         self.s.auth = ApiAuth(api_key, api_secret)
+        self.s.headers.update({"user-agent": "enclave-python"})
 
     def _request(
         self,
         method: str,
         path: str,
         body: str = "",
-        headers: Optional[dict] = None,
+        params: OptDict = None,
+        headers: OptDict = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
         method = method.upper()
@@ -41,27 +45,62 @@ class BaseClient:
 
         url: str = urlparse.urljoin(self._base_url, path).strip("/")
 
-        return self.s.request(method, url, data=body, headers=headers, timeout=timeout)
+        return self.s.request(method, url, data=body, params=params, headers=headers, timeout=timeout)
 
     def get(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        body: str = "",
+        params: OptDict = None,
+        headers: OptDict = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.GET, path, body, headers, timeout)
+        return self._request(models.GET, path, body, params, headers, timeout)
 
     def post(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        body: str = "",
+        params: OptDict = None,
+        headers: OptDict = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.POST, path, body, headers, timeout)
+        return self._request(models.POST, path, body, params, headers, timeout)
 
     def delete(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        body: str = "",
+        params: OptDict = None,
+        headers: OptDict = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.DELETE, path, body, headers, timeout)
+        return self._request(models.DELETE, path, body, params, headers, timeout)
 
     def put(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        body: str = "",
+        params: OptDict = None,
+        headers: OptDict = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.PUT, path, body, headers, timeout)
+        return self._request(models.PUT, path, body, params, headers, timeout)
+
+    # @staticmethod
+    # def build_params(params: Union[Dict[str, Any], List[Tuple[str, Any]]]) -> str:
+    #     """Builds a query string from a dict or of params.
+    #     Filters None values from the params.
+
+    #     If there aren't non None params, returns an empty string, otherwise return ?param=value&param2=value etc.
+    #     """
+    #     if isinstance(params, dict):  # make both into list of tuples
+    #         params = list(params.items())
+
+    #     query = urlparse.urlencode(  # Concat and encode.
+    #         [(k, v) for k, v in params if v is not None]  # Filter None values.
+    #     )
+    #     return f"?{query}" if query else ""
 
 
 class ApiAuth(requests.auth.AuthBase):

@@ -1,5 +1,5 @@
 """
-Client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests to each.
+client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests to each.
 """
 import json
 import os
@@ -13,11 +13,11 @@ from . import _baseclient, _cross, _perps, _spot, models
 
 class Client:
     def __init__(self, api_key: str, api_secret: str, base_url: str = models.PROD):
-        self.baseclient = _baseclient.BaseClient(api_key, api_secret, base_url)
+        self.bc = _baseclient.BaseClient(api_key, api_secret, base_url)
 
-        self.cross = _cross.Cross(self.baseclient)
-        self.perps = _perps.Perps(self.baseclient)
-        self.spot = _spot.Spot(self.baseclient)
+        self.cross = _cross.Cross(self.bc)
+        self.perps = _perps.Perps(self.bc)
+        self.spot = _spot.Spot(self.bc)
 
     @classmethod
     def from_api_file(cls, api_path: str, base_url: str):
@@ -30,15 +30,15 @@ class Client:
         return cls(api_key, api_secret, base_url)
 
     # Common REST API
-    # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
     # https://enclave-markets.notion.site/Common-REST-API-9d546fa6282b4bad87ef43d189b9071b
+    # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
 
     def authed_hello(self) -> requests.Response:
         """Make a request to the authed hello endpoint.
 
         `GET /authedHello`
 
-        Returns:
+        Response:
         ```
         {
             "result": "ACCOUNT_ID",
@@ -48,14 +48,14 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/authedHello")
+        return self.bc.get("/authedHello")
 
     def get_address_book(self) -> requests.Response:
         """Make a request to the address book endpoint.
 
         `GET /v0/address_book`
 
-        Returns:
+        Response:
         ```
         {
             "result": {
@@ -70,14 +70,14 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/address_book")
+        return self.bc.get("/v0/address_book")
 
     def get_markets(self) -> requests.Response:
         """Make a request to the markets endpoint, returns the markets tradeable by the user.
 
         `GET /v1/markets`
 
-        Returns:
+        Response:
         ```
         {
             "result": {
@@ -156,7 +156,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v1/markets")
+        return self.bc.get("/v1/markets")
 
     def get_balance(self, coin: str) -> requests.Response:
         """Gets balance of a specific asset.
@@ -184,7 +184,7 @@ class Client:
         Requires: view."""
 
         body = f'{{ "symbol": "{coin}" }}'
-        return self.baseclient.post("/v0/get_balance", body=body)
+        return self.bc.post("/v0/get_balance", body=body)
 
     def get_balances(self) -> requests.Response:
         """Gets balances of all assets in wallet
@@ -208,7 +208,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/balances")
+        return self.bc.get("/v0/wallet/balances")
 
     def get_deposit_addresses(self, coins: List[str]) -> requests.Response:
         """Gets all provisioned addresses for the coins for an account.
@@ -233,7 +233,7 @@ class Client:
                 Requires: view."""
 
         body = f'{{ "coins": {coins} }}'
-        return self.baseclient.post("/v0/wallet/deposit_address/list", body=body)
+        return self.bc.post("/v0/wallet/deposit_address/list", body=body)
 
     def get_deposits(self) -> requests.Response:
         """Gets all deposits for an account.
@@ -260,7 +260,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/deposits")
+        return self.bc.get("/v0/wallet/deposits")
 
     def get_deposit(self, txid: str) -> requests.Response:
         """Gets a deposit by transaction ID.
@@ -280,7 +280,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get(f"/v0/wallet/deposits/{txid}")
+        return self.bc.get(f"/v0/wallet/deposits/{txid}")
 
     # TODO: this is a case where we could have validation. like to check if end is after start and nothing is negative or zero?
     # TODO: this is a response that can't be json encoded by the base class
@@ -302,7 +302,7 @@ class Client:
             body["start_time"] = start_secs
         if end_secs is not None:
             body["end_time"] = end_secs
-        return self.baseclient.post("/v0/wallet/deposits/csv", body=json.dumps(body))
+        return self.bc.post("/v0/wallet/deposits/csv", body=json.dumps(body))
 
     def get_withdrawals(self) -> requests.Response:
         """Gets all withdrawals for an account.
@@ -328,7 +328,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/withdrawals")
+        return self.bc.get("/v0/wallet/withdrawals")
 
     def get_withdrawal(self, txid: str) -> requests.Response:
         """Gets a withdrawal by transaction ID.
@@ -348,7 +348,7 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get(f"/v0/wallet/withdrawals/{txid}")
+        return self.bc.get(f"/v0/wallet/withdrawals/{txid}")
 
     def get_withdrawals_csv(
         self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
@@ -367,7 +367,7 @@ class Client:
             body["start_time"] = start_secs
         if end_secs is not None:
             body["end_time"] = end_secs
-        return self.baseclient.post("/v0/wallet/withdrawals/csv", body=json.dumps(body))
+        return self.bc.post("/v0/wallet/withdrawals/csv", body=json.dumps(body))
 
     def provision_address(self, coin: str) -> requests.Response:
         """Provisions an address for deposit of an asset
@@ -390,7 +390,7 @@ class Client:
         Requires: view + transfer."""
 
         body = f'{{ "symbol": "{coin}" }}'
-        return self.baseclient.post("/v0/provision_address", body=body)
+        return self.bc.post("/v0/provision_address", body=body)
 
     def withdraw(self, to_address: str, amount: Union[str, Decimal], custom_id: str, coin: str) -> requests.Response:
         """Initiates a withdrawal
@@ -430,4 +430,4 @@ class Client:
                 "symbol": coin,
             }
         )
-        return self.baseclient.post("/v0/withdraw", body=json.dumps(body))
+        return self.bc.post("/v0/withdraw", body=json.dumps(body))

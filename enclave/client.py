@@ -15,6 +15,20 @@ Res = requests.Response
 
 
 class Client:
+    """Client defines the common API endpoints and convenience methods,
+    as well as a reference to Cross, Perps, and Spot objects to make requests to each.
+    It contains a BaseClient object to make requests to the API.
+
+    See (the Enclave docs)[https://docs.enclave.market] for more information.
+
+    Usage is Client(...).a_common_endpoint(...) for common endpoints and
+    Client(...).cross.a_cross_endpoint(...) for cross endpoints, etc.
+
+    Client can either be initialized with an API key id and secret as strings
+    (passed from ENV variable, dotenv file, hardcoded, etc.),
+    or from a file using `from_api_file` with the key id on the first line and the secret on the second line.
+    """
+
     def __init__(self, api_key: str, api_secret: str, base_url: str = models.PROD):
         self.bc = _baseclient.BaseClient(api_key, api_secret, base_url)
 

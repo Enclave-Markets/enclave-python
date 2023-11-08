@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     def hello_requests(c: Client) -> None:
         """Uses a provided client to make some requests to the Enclave API."""
-        res = c.baseclient.get("/hello")  # would break execution if throws error
+        res = c.bc.get("/hello")  # would break execution if throws error
         if res.ok:
             print(res.json())
         else:

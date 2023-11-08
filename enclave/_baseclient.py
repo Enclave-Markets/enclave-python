@@ -29,6 +29,7 @@ class BaseClient:
         self,
         method: str,
         path: str,
+        *,  # enforce keyword after `*`
         body: str = "",
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
@@ -44,24 +45,44 @@ class BaseClient:
         return self.s.request(method, url, data=body, headers=headers, timeout=timeout)
 
     def get(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        *,
+        body: str = "",
+        headers: Optional[dict] = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.GET, path, body, headers, timeout)
+        return self._request(models.GET, path, body=body, headers=headers, timeout=timeout)
 
     def post(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        *,
+        body: str = "",
+        headers: Optional[dict] = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.POST, path, body, headers, timeout)
+        return self._request(models.POST, path, body=body, headers=headers, timeout=timeout)
 
     def delete(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        *,
+        body: str = "",
+        headers: Optional[dict] = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.DELETE, path, body, headers, timeout)
+        return self._request(models.DELETE, path, body=body, headers=headers, timeout=timeout)
 
     def put(
-        self, path: str, body: str = "", headers: Optional[dict] = None, timeout: float = DEFAULT_TIMEOUT_SECS
+        self,
+        path: str,
+        *,
+        body: str = "",
+        headers: Optional[dict] = None,
+        timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.PUT, path, body, headers, timeout)
+        return self._request(models.PUT, path, body=body, headers=headers, timeout=timeout)
 
 
 class ApiAuth(requests.auth.AuthBase):

@@ -10,14 +10,16 @@ import requests
 
 from . import _baseclient, _cross, _perps, _spot, models
 
+Res = requests.Response
+
 
 class Client:
     def __init__(self, api_key: str, api_secret: str, base_url: str = models.PROD):
-        self.baseclient = _baseclient.BaseClient(api_key, api_secret, base_url)
+        self.bc = _baseclient.BaseClient(api_key, api_secret, base_url)
 
-        self.cross = _cross.Cross(self.baseclient)
-        self.perps = _perps.Perps(self.baseclient)
-        self.spot = _spot.Spot(self.baseclient)
+        self.cross = _cross.Cross(self.bc)
+        self.perps = _perps.Perps(self.bc)
+        self.spot = _spot.Spot(self.bc)
 
     @classmethod
     def from_api_file(cls, api_path: str, base_url: str):
@@ -33,7 +35,7 @@ class Client:
     # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
     # https://enclave-markets.notion.site/Common-REST-API-9d546fa6282b4bad87ef43d189b9071b
 
-    def authed_hello(self) -> requests.Response:
+    def authed_hello(self) -> Res:
         """Make a request to the authed hello endpoint.
 
         `GET /authedHello`
@@ -48,9 +50,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/authedHello")
+        return self.bc.get("/authedHello")
 
-    def get_address_book(self) -> requests.Response:
+    def get_address_book(self) -> Res:
         """Make a request to the address book endpoint.
 
         `GET /v0/address_book`
@@ -70,9 +72,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/address_book")
+        return self.bc.get("/v0/address_book")
 
-    def get_markets(self) -> requests.Response:
+    def get_markets(self) -> Res:
         """Make a request to the markets endpoint, returns the markets tradeable by the user.
 
         `GET /v1/markets`
@@ -156,9 +158,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v1/markets")
+        return self.bc.get("/v1/markets")
 
-    def get_balance(self, coin: str) -> requests.Response:
+    def get_balance(self, coin: str) -> Res:
         """Gets balance of a specific asset.
 
         `POST /v0/get_balance`
@@ -184,9 +186,9 @@ class Client:
         Requires: view."""
 
         body = f'{{ "symbol": "{coin}" }}'
-        return self.baseclient.post("/v0/get_balance", body=body)
+        return self.bc.post("/v0/get_balance", body=body)
 
-    def get_balances(self) -> requests.Response:
+    def get_balances(self) -> Res:
         """Gets balances of all assets in wallet
 
         `GET /v0/wallet/balances`
@@ -208,9 +210,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/balances")
+        return self.bc.get("/v0/wallet/balances")
 
-    def get_deposit_addresses(self, coins: List[str]) -> requests.Response:
+    def get_deposit_addresses(self, coins: List[str]) -> Res:
         """Gets all provisioned addresses for the coins for an account.
 
         `POST /v0/wallet/deposit_address/list`
@@ -233,9 +235,9 @@ class Client:
                 Requires: view."""
 
         body = f'{{ "coins": {coins} }}'
-        return self.baseclient.post("/v0/wallet/deposit_address/list", body=body)
+        return self.bc.post("/v0/wallet/deposit_address/list", body=body)
 
-    def get_deposits(self) -> requests.Response:
+    def get_deposits(self) -> Res:
         """Gets all deposits for an account.
         Reverse chronological array encapsulated in generic response wrapper.
 
@@ -260,9 +262,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/deposits")
+        return self.bc.get("/v0/wallet/deposits")
 
-    def get_deposit(self, txid: str) -> requests.Response:
+    def get_deposit(self, txid: str) -> Res:
         """Gets a deposit by transaction ID.
 
         `GET /v0/wallet/deposits/<TxID>`
@@ -280,13 +282,11 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get(f"/v0/wallet/deposits/{txid}")
+        return self.bc.get(f"/v0/wallet/deposits/{txid}")
 
     # TODO: this is a case where we could have validation. like to check if end is after start and nothing is negative or zero?
     # TODO: this is a response that can't be json encoded by the base class
-    def get_deposits_csv(
-        self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
-    ) -> requests.Response:
+    def get_deposits_csv(self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None) -> Res:
         # `*` enforces keyword only arguments
         """Gets deposits for an account within the start and end times
 
@@ -302,9 +302,9 @@ class Client:
             body["start_time"] = start_secs
         if end_secs is not None:
             body["end_time"] = end_secs
-        return self.baseclient.post("/v0/wallet/deposits/csv", body=json.dumps(body))
+        return self.bc.post("/v0/wallet/deposits/csv", body=json.dumps(body))
 
-    def get_withdrawals(self) -> requests.Response:
+    def get_withdrawals(self) -> Res:
         """Gets all withdrawals for an account.
 
         `GET /v0/wallet/withdrawals`
@@ -328,9 +328,49 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get("/v0/wallet/withdrawals")
+        return self.bc.get("/v0/wallet/withdrawals")
 
-    def get_withdrawal(self, txid: str) -> requests.Response:
+    def get_withdrawal(self, *, custom_id: Optional[str] = None, internal_id: Optional[str] = None) -> Res:
+        """
+        Get withdrawal status.
+        Exactly one of either custom_id or internal_id must be provided.
+
+        `POST /v0/get_withdrawal_status`
+
+        Request:
+        `{"customer_withdrawal_id": custom_id}` if custom_id
+        or
+        `{"withdrawal_id": internal_id}` if internal_id
+
+        Response:
+        ```
+        {
+            "result": {
+                "confirmation_number": 1,
+                "original_request": {
+                    "account_id": "5577006791947779410",
+                    "address": "0x064A94c753CBf65D1Bc484F6D41897b38250fbfF",
+                    "amount": "10",
+                    "customer_withdrawal_id": "abc123",
+                    "symbol": "AVAX"
+                },
+                "txid": "c06638d16869699138ec9d9fa57a6ac4d21068bfafc4211305d636f80b77a2101",
+                "withdrawal_id": "06638d16869699138ec9d9fa57a6ac4d21068bfafc4211305d636f80b77a2101",
+                "withdrawal_status": "WITHDRAWAL_PENDING"
+            },
+            "success": true
+        }
+        ```
+
+        Requires: view."""
+
+        if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
+            raise ValueError("Must provide exactly one of custom_id or internal_id")
+
+        body = {"customer_withdrawal_id": custom_id} if custom_id else {"withdrawal_id": internal_id}
+        return self.bc.post("/v0/get_withdrawal_status", body=json.dumps(body))
+
+    def get_withdrawal_by_txid(self, txid: str) -> Res:
         """Gets a withdrawal by transaction ID.
 
         `GET /v0/wallet/withdrawals/<TxID>`
@@ -339,7 +379,10 @@ class Client:
         ```
         {
             "result": {
-                "address": "0x123abc...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
+                "address": "0x123abc...",
+                "coin": "AVAX",
+                "size": "10000",
+                "status": "WITHDRAWAL_CONFIRMED",
                 "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0xabc123...", "withdrawal_id": "1a2b3c..."
             },
             "success": true
@@ -348,11 +391,9 @@ class Client:
 
         Requires: view."""
 
-        return self.baseclient.get(f"/v0/wallet/withdrawals/{txid}")
+        return self.bc.get(f"/v0/wallet/withdrawals/{txid}")
 
-    def get_withdrawals_csv(
-        self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
-    ) -> requests.Response:
+    def get_withdrawals_csv(self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None) -> Res:
         """Gets withdrawals for an account within the start and end times
 
         `POST /v0/wallet/withdrawals/csv`
@@ -367,9 +408,9 @@ class Client:
             body["start_time"] = start_secs
         if end_secs is not None:
             body["end_time"] = end_secs
-        return self.baseclient.post("/v0/wallet/withdrawals/csv", body=json.dumps(body))
+        return self.bc.post("/v0/wallet/withdrawals/csv", body=json.dumps(body))
 
-    def provision_address(self, coin: str) -> requests.Response:
+    def provision_address(self, coin: str) -> Res:
         """Provisions an address for deposit of an asset
 
         `POST /v0/provision_address`
@@ -390,9 +431,9 @@ class Client:
         Requires: view + transfer."""
 
         body = f'{{ "symbol": "{coin}" }}'
-        return self.baseclient.post("/v0/provision_address", body=body)
+        return self.bc.post("/v0/provision_address", body=body)
 
-    def withdraw(self, to_address: str, amount: Union[str, Decimal], custom_id: str, coin: str) -> requests.Response:
+    def withdraw(self, to_address: str, amount: Union[str, Decimal], custom_id: str, coin: str) -> Res:
         """Initiates a withdrawal
 
         `POST /v0/withdraw`
@@ -430,4 +471,4 @@ class Client:
                 "symbol": coin,
             }
         )
-        return self.baseclient.post("/v0/withdraw", body=json.dumps(body))
+        return self.bc.post("/v0/withdraw", body=json.dumps(body))

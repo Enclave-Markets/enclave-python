@@ -1,5 +1,5 @@
 # %%
-"""Getting started with the Enclave Python SDK
+"""Getting started with the Enclave Python Package.
 Run from base folder using `python -m examples.intro`"""
 import dotenv
 

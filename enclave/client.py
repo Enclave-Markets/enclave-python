@@ -1,7 +1,7 @@
 """
-client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests.
+client implements the Enclave API and contains an instance of Cross, Perps, and Spot to make requests.
 
-The Client class is the intended way to interface with the SDK.
+The Client class is the intended way to interface with the Enclave Markets API.
 Modules beginning with an underscore such as _spot are not intended to be used directly.
 """
 import json
@@ -60,7 +60,7 @@ class Client:
         Returns True if the API is ready, False if it timed out.
         """
         start = time.time()
-        while not (self.bc.get("/status").ok):
+        while not self.bc.get("/status").ok:
             if time.time() - start > fail_after:
                 return False
             time.sleep(sleep_time)

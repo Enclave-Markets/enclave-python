@@ -1,18 +1,22 @@
 """
-Spot contains the Spot specific API and calls an instance of BaseClient to make requests and handle auth.
+Spot implements the Spot specific API and calls an instance of BaseClient to make requests and handle auth.
 """
 import json
 from decimal import Decimal
 from typing import Optional
-
-import requests
 
 from . import _baseclient, models
 from .models import Res
 
 
 class Spot:
-    """Spot contains the Spot specific API and calls an instance of BaseClient to make requests and handle auth."""
+    """Spot contains the Spot specific API and calls an instance of BaseClient to make requests and handle auth.
+
+    Designed to be used as `Client(...).spot.a_spot_endpoint(...)`
+    and not imported directly.
+
+    See the Spot API docs
+    https://enclave-markets.notion.site/Spot-REST-API-2a929f6266ff45aaa559bc8a3f34a308"""
 
     def __init__(self, base_client: _baseclient.BaseClient):
         self.bc = base_client
@@ -160,7 +164,7 @@ class Spot:
 
     # TODO: maybe move * after market? in general force keyword params?
     def get_fills_csv(
-        self, *, market: Optional[str] = None, start_secs: Optional[int] = None, end_secs: Optional[int] = None
+        self, market: Optional[str] = None, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
     ) -> Res:
         """
         Export CSV of filled orders that meet the optional parameters.
@@ -211,33 +215,13 @@ class Spot:
         Request Path Parameters:
         - custom_id: The client order ID to cancel (e.g. abc123). Optional.
         - internal_id: The internal order ID to cancel (e.g. 197ec08e001658690721be129e7fa595). Optional.
-
-        Response:
-        None"""
+        """
         if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
             raise ValueError("Must provide exactly one of custom_id or internal_id")
 
         path = f"client:{custom_id}" if custom_id else str(internal_id)
 
         return self.bc.delete(f"/v1/orders/{path}")
-
-    """## Create Spot Order
-    Creates a spot order. Limit or market orders can be created by changing the “type” field.
-    For market orders, the quantity specified must always be in terms of the quantity given up, so for sells specify a (base) `size`, and for buys specify `quoteSize`
-
-    `POST /v1/orders`   
-
-    | Name | Type | Description | Example | Required |
-    | --- | --- | --- | --- | --- |
-    | clientOrderId | string | optional order id provided by client.  Must be alphanumeric including underscores and dashes and less ≤ 64 characters. | "order123" | No |
-    | market | string | trading market pair | "AVAX-USDC" | Yes |
-    | price | string | limit price.  Must be aligned with quoteIncrement from /v1/markets | "1.55" | Yes |
-    | quoteSize | string | order quantity based in quote currency.  Can only be set for market order buys. | "13.0967" | No |
-    | side | string | buy or sell | "buy" | Yes |
-    | size | string | the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets | "20.30" | Yes |
-    | type | string | the order type, “limit” or “market” | limit | No, defaults to “limit” |
-    | timeInForce | string | “GTC” - Good until cancelled or “IOC” - Immediate or cancel. Cannot be set for market orders.  | IOC | No, defaults to “GTC” |
-    | postOnly | boolean | Whether an order should be prohibited from filling on placement.  | true | No, defaults to false |"""
 
     def new_order(
         self,
@@ -248,19 +232,45 @@ class Spot:
         *,
         custom_id: Optional[str] = None,
         quote_size: Optional[Decimal] = None,
-        type: Optional[str] = None,
-        post_only: Optional[bool] = None,
+        order_type: Optional[str] = None,
         time_in_force: Optional[str] = None,
+        post_only: Optional[bool] = None,
     ) -> Res:
+        """Creates a spot order.
+
+        Limit or market orders can be created by changing the “type” field.
+        For market orders, the quantity specified must always be in terms of the quantity given up,
+        so for sells specify a (base) `size`, and for buys specify `quoteSize`
+
+        `POST /v1/orders`
+
+        Request Body Parameters:
+        - market: trading market pair (e.g. AVAX-USDC).
+        - price: limit price.  Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55).
+        - side: buy or sell (e.g. "buy").
+        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30).
+
+        - custom_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
+        - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
+        - order_type: The order type, “limit” or “market” (e.g. "limit"). Optional, defaults to “limit”.
+        - time_in_force: “GTC” or “IOC” - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to “GTC”.
+        - post_only: Whether an order should be prohibited from filling on placement (e.g. True). Optional, defaults to False.
+        """
+
         if side not in models.SIDES:
             raise ValueError(f"Unsupported side {side=}. Must be one of {models.SIDES}.")
-        if quote_size and type is not models.MARKET:
-            raise ValueError("quote_size can only be set for market orders")
 
         body = {
-            k: v
-            for k, v in {"market": market, "price": str(price), "side": side, "size": str(size)}.items()
-            if v is not None
+            "market": market,
+            "price": str(price),
+            "side": side,
+            "size": str(size),
+            "clientOrderId": custom_id,
+            "quoteSize": str(quote_size) if quote_size else None,
+            "type": order_type,
+            "timeInForce": time_in_force,
+            "postOnly": post_only,
         }
+        body_filtered = {k: v for k, v in body.items() if v is not None}  # filter None
 
-        return self.bc.post("/v1/orders", body=json.dumps(body))
+        return self.bc.post("/v1/orders", body=json.dumps(body_filtered))

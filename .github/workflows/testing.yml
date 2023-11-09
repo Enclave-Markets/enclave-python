@@ -26,4 +26,4 @@ jobs:
       - name: Typecheck Python
         run: |
           pip install mypy
-          mypy --install-types --non-interactive --strict --allow-any-generics enclave
+          mypy --install-types --non-interactive --strict --allow-any-generics ./enclave

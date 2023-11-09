@@ -1,5 +1,5 @@
 """
-Spot implements the Spot specific API and calls an instance of BaseClient to make requests and handle auth.
+spot implements the Spot specific API and calls an instance of BaseClient to make requests and handle auth.
 """
 import json
 from decimal import Decimal

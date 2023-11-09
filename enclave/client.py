@@ -13,8 +13,7 @@ from typing import List, Optional, Union
 import requests
 
 from . import _baseclient, _cross, _perps, _spot, models
-
-Res = requests.Response
+from .models import Res
 
 
 class Client:

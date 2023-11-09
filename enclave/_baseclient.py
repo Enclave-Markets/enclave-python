@@ -16,8 +16,6 @@ from . import models
 
 DEFAULT_TIMEOUT_SECS: Final[float] = 10
 
-OptDict = Optional[dict]
-
 
 class BaseClient:
     """A base client has a requests.Session and handles basic requests and auth."""
@@ -32,9 +30,10 @@ class BaseClient:
         self,
         method: str,
         path: str,
+        *,  # enforce keyword after `*`
         body: str = "",
-        params: OptDict = None,
-        headers: OptDict = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
         method = method.upper()
@@ -50,57 +49,46 @@ class BaseClient:
     def get(
         self,
         path: str,
+        *,
         body: str = "",
-        params: OptDict = None,
-        headers: OptDict = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.GET, path, body, params, headers, timeout)
+        return self._request(models.GET, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def post(
         self,
         path: str,
+        *,
         body: str = "",
-        params: OptDict = None,
-        headers: OptDict = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.POST, path, body, params, headers, timeout)
+        return self._request(models.POST, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def delete(
         self,
         path: str,
+        *,
         body: str = "",
-        params: OptDict = None,
-        headers: OptDict = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.DELETE, path, body, params, headers, timeout)
+        return self._request(models.DELETE, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def put(
         self,
         path: str,
+        *,
         body: str = "",
-        params: OptDict = None,
-        headers: OptDict = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.PUT, path, body, params, headers, timeout)
-
-    # @staticmethod
-    # def build_params(params: Union[Dict[str, Any], List[Tuple[str, Any]]]) -> str:
-    #     """Builds a query string from a dict or of params.
-    #     Filters None values from the params.
-
-    #     If there aren't non None params, returns an empty string, otherwise return ?param=value&param2=value etc.
-    #     """
-    #     if isinstance(params, dict):  # make both into list of tuples
-    #         params = list(params.items())
-
-    #     query = urlparse.urlencode(  # Concat and encode.
-    #         [(k, v) for k, v in params if v is not None]  # Filter None values.
-    #     )
-    #     return f"?{query}" if query else ""
+        return self._request(models.PUT, path, body=body, params=params, headers=headers, timeout=timeout)
 
 
 class ApiAuth(requests.auth.AuthBase):

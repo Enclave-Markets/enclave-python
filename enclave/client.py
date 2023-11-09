@@ -4,6 +4,8 @@ client implements the Enclave API and contains an instance of Cross, Perps, and 
 The Client class is the intended way to interface with the Enclave Markets API.
 Modules beginning with an underscore such as _spot are not intended to be used directly.
 """
+from __future__ import annotations  # self type only 3.11+
+
 import json
 import os
 import time
@@ -40,7 +42,7 @@ class Client:
         self.spot = _spot.Spot(self.bc)
 
     @classmethod
-    def from_api_file(cls, api_path: str, base_url: str):
+    def from_api_file(cls, api_path: str, base_url: str) -> Client:
         """Create a Client from a file with the key id on the first line and the api secret on the second line."""
         path = os.path.normpath(api_path)
         with open(path, "r", encoding="utf8") as api_file:

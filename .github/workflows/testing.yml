@@ -18,7 +18,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ./requirements.txt
+          pip install -r ./requirements_examples.txt
       - name: Test Python
         run: |
           pip install pytest
           pytest ./tests
+      - name: Typecheck Python
+        run: |
+          pip install mypy
+          mypy --install-types --non-interactive --strict --allow-any-generics enclave

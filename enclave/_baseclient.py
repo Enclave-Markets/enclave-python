@@ -111,7 +111,7 @@ class ApiAuth(requests.auth.AuthBase):
             clean_path += f"?{parsed.query}"
 
         timestamp = int(time.time() * 1_000)  # time returns seconds, server expects ms.
-        body = r.body if r.body else ""
+        body = str(r.body) if r.body else ""
 
         mac = hmac.new(self.__secret.encode(), f"{str(timestamp)}{r.method}{clean_path}{body}".encode(), hashlib.sha256)
 

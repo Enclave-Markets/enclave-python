@@ -53,15 +53,16 @@ class Client:
     # We could pass kwargs and have it unpacked into `get`, but keeping it simple this isn't allowed.
     # https://enclave-markets.notion.site/Common-REST-API-9d546fa6282b4bad87ef43d189b9071b
 
-    def wait(self, sleep_time: float = 1, fail_after: float = 10) -> bool:
-        """Wait for the API to be ready, sleeping for `sleep_time` seconds between requests (default 1).
+    def wait_until_ready(self, sleep_time: float = 1, fail_after: float = 10) -> bool:
+        """Wait for the API to be ready,
+        sleeping for `sleep_time` seconds between requests (default 1).
         Optional fail after `fail_after` seconds (default 10).
 
         Returns True if the API is ready, False if it timed out.
         """
         start = time.time()
         while not self.bc.get("/status").ok:
-            if time.time() - start > fail_after:
+            if fail_after > 0 and ((time.time() - start) > fail_after):
                 return False
             time.sleep(sleep_time)
         return True
@@ -69,125 +70,21 @@ class Client:
     def authed_hello(self) -> Res:
         """Make a request to the authed hello endpoint.
 
-        `GET /authedHello`
-
-        Returns:
-        ```
-        {
-            "result": "ACCOUNT_ID",
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /authedHello`"""
 
         return self.bc.get("/authedHello")
 
     def get_address_book(self) -> Res:
         """Make a request to the address book endpoint.
 
-        `GET /v0/address_book`
-
-        Returns:
-        ```
-        {
-            "result": {
-                "addressBook": [
-                    "0xabc...",
-                    "0x123..."
-                ]
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/address_book`"""
 
         return self.bc.get("/v0/address_book")
 
     def get_markets(self) -> Res:
         """Make a request to the markets endpoint, returns the markets tradeable by the user.
 
-        `GET /v1/markets`
-
-        Returns:
-        ```
-        {
-            "result": {
-                "cross": {
-                    "tradingPairs": [
-                        {
-                            "pair": {
-                                "base": "AVAX",
-                                "quote": "USDC"
-                            },
-                            "decimalPlaces": 6
-                        },
-                        {
-                            "pair": {
-                                "base": "AAVE",
-                                "quote": "USDC"
-                            },
-                            "decimalPlaces": 6
-                        }
-                    ]
-                },
-                "spot": {
-                    "tradingPairs": [
-                        {
-                            "pair": {
-                                "base": "AVAX",
-                                "quote": "USDC"
-                            },
-                            "baseIncrement": "0.001",
-                            "quoteIncrement": "0.01"
-                        },
-                        {
-                            "pair": {
-                                "base": "AVAX",
-                                "quote": "ETH"
-                            },
-                            "baseIncrement": "0.001",
-                            "quoteIncrement": "0.000001"
-                        }
-                    ]
-                },
-                "tokenConfig": [
-                    {
-                        "id": "AVAX",
-                        "name": "Avalanche",
-                        "decimals": 6,
-                        "network": "avalanche",
-                        "assetType": "native",
-                        "nativeAssetName": "avalanche",
-                        "coinGeckoId": "avalanche-2",
-                        "coinGeckoCurrency": "",
-                        "bridgeInfoUrl": "",
-                        "description": "",
-                        "minOrderSize": "0.01",
-                        "maxOrderSize": "28819"
-                    },
-                    {
-                        "id": "USDC",
-                        "name": "USD Coin",
-                        "decimals": 2,
-                        "network": "ethereum",
-                        "assetType": "native",
-                        "nativeAssetName": "",
-                        "coinGeckoId": "usd-coin",
-                        "coinGeckoCurrency": "usd",
-                        "bridgeInfoUrl": "",
-                        "description": "",
-                        "minOrderSize": "0.01",
-                        "maxOrderSize": "500000"
-                    }
-                ]
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v1/markets`"""
 
         return self.bc.get("/v1/markets")
 
@@ -198,23 +95,7 @@ class Client:
 
         Request:
         `{ "symbol": "COIN" }`
-        symbol: str, required.
-
-        Response:
-        ```
-        {
-            "result": {
-                "accountId": "5577006791947779410",
-                "freeBalance": "3000",
-                "reservedBalance": "7000",
-                "symbol": "AVAX",
-                "totalBalance": "10000"
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        symbol: str, required."""
 
         body = f'{{ "symbol": "{coin}" }}'
         return self.bc.post("/v0/get_balance", body=body)
@@ -222,24 +103,7 @@ class Client:
     def get_balances(self) -> Res:
         """Gets balances of all assets in wallet
 
-        `GET /v0/wallet/balances`
-
-        Response:
-        ```
-        {
-            "result": [
-                {
-                    "coin": "AVAX", free": "3000", "reserved": "7000", "total": "10000", "usdValue": "150000"
-                },
-                {
-                    "coin": "AAVE", "total": "0", "reserved": "0", "free": "0", "usdValue": "0"
-                }
-            ],
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/wallet/balances`"""
 
         return self.bc.get("/v0/wallet/balances")
 
@@ -248,22 +112,8 @@ class Client:
 
         `POST /v0/wallet/deposit_address/list`
 
-        Response:
-        ```
-        {
-            "result": [
-                {
-                    "address": "0x123...", "coin": "AVAX"
-                },
-                {
-                    "address": "0xabc...", "coin": "USDC"
-                }
-            ],
-            "success": true
-        }
-        ```
-
-                Requires: view."""
+        Request:
+        `{ "coins": ["AVAX", "ETH"] }` list of strings of coin symbols, required."""
 
         body = f'{{ "coins": {coins} }}'
         return self.bc.post("/v0/wallet/deposit_address/list", body=body)
@@ -272,46 +122,14 @@ class Client:
         """Gets all deposits for an account.
         Reverse chronological array encapsulated in generic response wrapper.
 
-        `GET /v0/wallet/deposits`
-
-        Response:
-        ```
-        {
-            "result": [
-                {
-                    "coin": "AVAX", "currentConfirmations": 25, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
-                    "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0x123abc..."
-                },
-                {
-                    "coin": "AVAX", "currentConfirmations": 10, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
-                    "time": "2019-04-05T09:56:55.728933+00:00", "txid": "0xabc123..."
-                }
-            ],
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/wallet/deposits`"""
 
         return self.bc.get("/v0/wallet/deposits")
 
     def get_deposit(self, txid: str) -> Res:
         """Gets a deposit by transaction ID.
 
-        `GET /v0/wallet/deposits/<TxID>`
-
-        Response:
-        ```
-        {
-            "result": {
-                "coin": "AVAX", "currentConfirmations": 25, "requiredConfirmations": 25, "size": "10000", "status": "confirmed",
-                "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0x123abc..."
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/wallet/deposits/<TxID>`"""
 
         return self.bc.get(f"/v0/wallet/deposits/{txid}")
 
@@ -319,14 +137,9 @@ class Client:
     # TODO: this is a response that can't be json encoded by the base class
     def get_deposits_csv(self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None) -> Res:
         # `*` enforces keyword only arguments
-        """Gets deposits for an account within the start and end times
+        """Gets deposits for an account within the start and end times (optional)
 
-        `POST /v0/wallet/deposits/csv`
-
-        Response:
-        `CSV formatted text, sorted reverse chronologically`
-
-        Requires: view."""
+        `POST /v0/wallet/deposits/csv`"""
 
         body = {}
         if start_secs is not None:
@@ -338,26 +151,7 @@ class Client:
     def get_withdrawals(self) -> Res:
         """Gets all withdrawals for an account.
 
-        `GET /v0/wallet/withdrawals`
-
-        Response:
-        ```
-        {
-            "result": [
-                {
-                    "address": "0x123abc...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
-                    "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0xabc123...", "withdrawal_id": "1a2b3c..."
-                },
-                {
-                    "address": "0x456def...", "coin": "AVAX", "size": "10000", "status": "WITHDRAWAL_CONFIRMED",
-                    "time": "2019-04-05T09:56:55.728933+00:00", "txid": "0xdef456...", "withdrawal_id": "4d5e6f..."
-                }
-            ],
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/wallet/withdrawals`"""
 
         return self.bc.get("/v0/wallet/withdrawals")
 
@@ -371,68 +165,25 @@ class Client:
         Request:
         `{"customer_withdrawal_id": custom_id}` if custom_id
         or
-        `{"withdrawal_id": internal_id}` if internal_id
-
-        Response:
-        ```
-        {
-            "result": {
-                "confirmation_number": 1,
-                "original_request": {
-                    "account_id": "5577006791947779410",
-                    "address": "0x064A94c753CBf65D1Bc484F6D41897b38250fbfF",
-                    "amount": "10",
-                    "customer_withdrawal_id": "abc123",
-                    "symbol": "AVAX"
-                },
-                "txid": "c06638d16869699138ec9d9fa57a6ac4d21068bfafc4211305d636f80b77a2101",
-                "withdrawal_id": "06638d16869699138ec9d9fa57a6ac4d21068bfafc4211305d636f80b77a2101",
-                "withdrawal_status": "WITHDRAWAL_PENDING"
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `{"withdrawal_id": internal_id}` if internal_id"""
 
         if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
             raise ValueError("Must provide exactly one of custom_id or internal_id")
 
-        body = {"customer_withdrawal_id": custom_id} if custom_id else {"withdrawal_id": internal_id}
+        body = {"customer_withdrawal_id": custom_id} if custom_id else {"withdrawal_id": str(internal_id)}
         return self.bc.post("/v0/get_withdrawal_status", body=json.dumps(body))
 
     def get_withdrawal_by_txid(self, txid: str) -> Res:
         """Gets a withdrawal by transaction ID.
 
-        `GET /v0/wallet/withdrawals/<TxID>`
-
-        Response:
-        ```
-        {
-            "result": {
-                "address": "0x123abc...",
-                "coin": "AVAX",
-                "size": "10000",
-                "status": "WITHDRAWAL_CONFIRMED",
-                "time": "2019-03-05T09:56:55.728933+00:00", "txid": "0xabc123...", "withdrawal_id": "1a2b3c..."
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view."""
+        `GET /v0/wallet/withdrawals/<TxID>`"""
 
         return self.bc.get(f"/v0/wallet/withdrawals/{txid}")
 
     def get_withdrawals_csv(self, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None) -> Res:
-        """Gets withdrawals for an account within the start and end times
+        """Gets withdrawals for an account within the start and end times (optional)
 
-        `POST /v0/wallet/withdrawals/csv`
-
-        Response:
-        `CSV formatted text, sorted reverse chronologically`
-
-        Requires: view."""
+        `POST /v0/wallet/withdrawals/csv`"""
 
         body = {}
         if start_secs is not None:
@@ -447,19 +198,7 @@ class Client:
         `POST /v0/provision_address`
 
         Request:
-        `{"symbol": "AVAX"}`
-
-        Response:
-        ```
-        {
-            "result": {
-                "accountId": "5572106791847779410", "address": "0x074B94d653CBf65D1Bc484F6D41897b38250fbfF", "symbol": "AVAX"
-            },
-            "success": true
-        }
-        ```
-
-        Requires: view + transfer."""
+        `{"symbol": "AVAX"}`"""
 
         body = f'{{ "symbol": "{coin}" }}'
         return self.bc.post("/v0/provision_address", body=body)
@@ -469,7 +208,7 @@ class Client:
 
         `POST /v0/withdraw`
 
-        Request:
+         Request:
         ```
         {
             "address": "0x074B94d653CBf65D1Bc484F6D41897b38250fbfF",
@@ -477,29 +216,12 @@ class Client:
             "customer_withdrawal_id": "abc123",
             "symbol": "AVAX"
         }
-        ```
+        ```"""
 
-        Response:
-        ```
-        {
-            "result": {
-                "customer_withdrawal_id": "abc123",
-                "withdrawal_id": "41ff4b35112ccfa3e466f302c914f323f5687e048a8e2fd82bcdcdcb9eb47571",
-                "withdrawal_status": "WITHDRAWAL_PENDING",
-            },
-            "success": true
+        body = {
+            "address": to_address,
+            "amount": str(amount),
+            "customer_withdrawal_id": custom_id,
+            "symbol": coin,
         }
-        ```
-
-        Requires: view + transfer."""
-
-        body = {}
-        body.update(
-            {
-                "address": to_address,
-                "amount": str(amount),
-                "customer_withdrawal_id": custom_id,
-                "symbol": coin,
-            }
-        )
         return self.bc.post("/v0/withdraw", body=json.dumps(body))

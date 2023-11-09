@@ -1,6 +1,8 @@
 """
 Client is the Enclave SDK and contains an instance of Cross, Perps, and Spot to make requests to each.
 """
+from __future__ import annotations  # self type only 3.11+
+
 import json
 import os
 from decimal import Decimal
@@ -20,7 +22,7 @@ class Client:
         self.spot = _spot.Spot(self.baseclient)
 
     @classmethod
-    def from_api_file(cls, api_path: str, base_url: str):
+    def from_api_file(cls, api_path: str, base_url: str) -> Client:
         """Create a Client from a file with the key id on the first line and the api secret on the second line."""
         path = os.path.normpath(api_path)
         with open(path, "r", encoding="utf8") as api_file:

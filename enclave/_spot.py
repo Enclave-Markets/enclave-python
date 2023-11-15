@@ -28,8 +28,8 @@ class Spot:
         cursor: Optional[str] = None,
         market: Optional[str] = None,
         status: Optional[str] = None,
-        start_secs: Optional[int] = None,
-        end_secs: Optional[int] = None,
+        start_ms: Optional[int] = None,
+        end_ms: Optional[int] = None,
     ) -> Res:
         """
         Get orders that meet the optional parameters.
@@ -41,36 +41,36 @@ class Spot:
         - cursor: The cursor to use for pagination (e.g. NQ5WWO3THN3Q====). Optional.
         - market: The market to filter orders by (e.g. AVAX-USDC). Optional.
         - status: The status to filter orders by (e.g. open). Optional.
-        - start_secs: The unix start time in seconds to filter orders by (e.g. 1684814400). Optional.
-        - end_secs: The unix end time in seconds to filter orders by (e.g. 1672549200). Optional."""
+        - start_ms: The unix start time in milliseconds to filter orders by (e.g. 1684814400000). Optional.
+        - end_ms: The unix end time in milliseconds to filter orders by (e.g. 1672549200000). Optional."""
 
         query = {
             "limit": limit,
             "cursor": cursor,
             "market": market,
             "status": status,
-            "startTime": start_secs,
-            "endTime": end_secs,
+            "startTime": start_ms,
+            "endTime": end_ms,
         }
         return self.bc.get("/v1/orders", params=query)
 
-    def get_order(self, *, custom_id: Optional[str] = None, internal_id: Optional[str] = None) -> Res:
+    def get_order(self, *, client_order_id: Optional[str] = None, order_id: Optional[str] = None) -> Res:
         """
-        Get an order by customer or internal ID. Exactly one of custom_id or internal_id must be provided.
+        Get an order by client order ID or internal order ID. Exactly one of client_order_id or order_id must be provided.
 
-        `GET /v1/orders/{orderID}` if internal ID
+        `GET /v1/orders/{orderID}` if order_id (internal)
         or
-        `GET /v1/orders/client:{clientOrderID}` if customer ID
+        `GET /v1/orders/client:{clientOrderID}` if client_order_id.
 
 
         Request Path Parameters:
-        - custom_id: The client order ID to retrieve (e.g. abc123). Optional.
-        - internal_id: The internal order ID to retrieve (e.g. 197ec08e001658690721be129e7fa595). Optional."""
+        - client_order_id: The client order ID to retrieve (e.g. abc123). Optional.
+        - order_id: The internal order ID to retrieve (e.g. 197ec08e001658690721be129e7fa595). Optional."""
 
-        if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
-            raise ValueError("Must provide exactly one of custom_id or internal_id")
+        if (not any((client_order_id, order_id))) or all((client_order_id, order_id)):
+            raise ValueError("Must provide exactly one of client_order_id or order_id")
 
-        path = f"client:{custom_id}" if custom_id else str(internal_id)
+        path = f"client:{client_order_id}" if client_order_id else str(order_id)
 
         return self.bc.get(f"/v1/orders/{path}")
 
@@ -79,8 +79,8 @@ class Spot:
         *,
         market: Optional[str] = None,
         status: Optional[str] = None,
-        start_secs: Optional[int] = None,
-        end_secs: Optional[int] = None,
+        start_ms: Optional[int] = None,
+        end_ms: Optional[int] = None,
     ) -> Res:
         """
         Export CSV of orders that meet the optional parameters.
@@ -90,14 +90,14 @@ class Spot:
         Request Query Parameters:
         - market: The market to filter orders by (e.g. AVAX-USDC). Optional.
         - status: The status to filter orders by (e.g. open). Optional.
-        - start_secs: The unix start time in seconds to filter orders by (e.g. 1684814400). Optional.
-        - end_secs: The unix end time in seconds to filter orders by (e.g. 1672549200). Optional."""
+        - start_ms: The unix start time in milliseconds to filter orders by (e.g. 1684814400000). Optional.
+        - end_ms: The unix end time in milliseconds to filter orders by (e.g. 1672549200000). Optional."""
 
         query = {
             "market": market,
             "status": status,
-            "startTime": start_secs,
-            "endTime": end_secs,
+            "startTime": start_ms,
+            "endTime": end_ms,
         }
         return self.bc.get("/v1/orders/csv", params=query)
 
@@ -120,8 +120,8 @@ class Spot:
         limit: Optional[int] = None,
         cursor: Optional[str] = None,
         market: Optional[str] = None,
-        start_secs: Optional[int] = None,
-        end_secs: Optional[int] = None,
+        start_ms: Optional[int] = None,
+        end_ms: Optional[int] = None,
     ) -> Res:
         """
         Get fills that meet the optional parameters.
@@ -132,39 +132,37 @@ class Spot:
         - limit: The number of orders to return (e.g. 1000). Optional.
         - cursor: The cursor to use for pagination (e.g. NQ5WWO3THN3Q====). Optional.
         - market: The market to filter orders by (e.g. AVAX-USDC). Optional.
-        - start_secs: The unix start time in seconds to filter orders by (e.g. 1684814400). Optional.
-        - end_secs: The unix end time in seconds to filter orders by (e.g. 1672549200). Optional.
-        """
+        - start_ms: The unix start time in milliseconds to filter orders by (e.g. 1684814400000). Optional.
+        - end_ms: The unix end time in milliseconds to filter orders by (e.g. 1672549200000). Optional."""
 
         query = {
             "limit": limit,
             "cursor": cursor,
             "market": market,
-            "startTime": start_secs,
-            "endTime": end_secs,
+            "startTime": start_ms,
+            "endTime": end_ms,
         }
         return self.bc.get("/v1/fills", params=query)
 
-    def get_fills_by_id(self, *, custom_id: Optional[str] = None, internal_id: Optional[str] = None) -> Res:
+    def get_fills_by_id(self, *, client_order_id: Optional[str] = None, order_id: Optional[str] = None) -> Res:
         """
         Fills by Order ID
-        Exactly one of custom_id (clientOrderID) or internal_id (orderID) must be provided.
+        Exactly one of client_order_id (clientOrderID) or internal order_id (orderID) must be provided.
 
-        `GET /v1/fills/client:{clientOrderID}` if custom_id
+        `GET /v1/fills/client:{clientOrderID}` if client_order_id
         or
-        `GET /v1/orders/{orderID}/fills` if internal_id
-        """
+        `GET /v1/orders/{orderID}/fills` if order_id (internal)"""
 
-        if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
-            raise ValueError("Must provide exactly one of custom_id or internal_id")
+        if (not any((client_order_id, order_id))) or all((client_order_id, order_id)):
+            raise ValueError("Must provide exactly one of client_order_id or order_id")
 
-        path = f"/v1/fills/client:{custom_id}" if custom_id else f"/v1/orders/{internal_id}/fills"
+        path = f"/v1/fills/client:{client_order_id}" if client_order_id else f"/v1/orders/{order_id}/fills"
 
         return self.bc.get(path)
 
     # TODO: maybe move * after market? in general force keyword params?
     def get_fills_csv(
-        self, market: Optional[str] = None, *, start_secs: Optional[int] = None, end_secs: Optional[int] = None
+        self, market: Optional[str] = None, *, start_ms: Optional[int] = None, end_ms: Optional[int] = None
     ) -> Res:
         """
         Export CSV of filled orders that meet the optional parameters.
@@ -173,18 +171,13 @@ class Spot:
 
         Request Query Parameters:
         - market: The market to filter orders by (e.g. AVAX-USDC). Optional.
-        - start_secs: The unix start time in seconds to filter orders by (e.g. 1684814400). Optional.
-        - end_secs: The unix end time in seconds to filter orders by (e.g. 1672549200). Optional.
-
-        Response:
-        `CSV formatted text, sorted reverse chronologically`
-
-        Requires: view."""
+        - start_ms: The unix start time in milliseconds to filter orders by (e.g. 1684814400000). Optional.
+        - end_ms: The unix end time in milliseconds to filter orders by (e.g. 1672549200000). Optional."""
 
         query = {
             "market": market,
-            "startTime": start_secs,
-            "endTime": end_secs,
+            "startTime": start_ms,
+            "endTime": end_ms,
         }
         return self.bc.get("/v1/fills/csv", params=query)
 
@@ -196,30 +189,27 @@ class Spot:
 
         Request Query Parameters:
         - market: The market to cancel all orders in (e.g. AVAX-USDC). Optional.
-        If no market is provided, all orders for all markets will be cancelled.
-
-        Response:
-        None"""
+        If no market is provided, all orders for all markets will be cancelled."""
 
         return self.bc.delete("/v1/orders", params={"market": market})
 
-    def cancel_order(self, *, custom_id: Optional[str] = None, internal_id: Optional[str] = None) -> Res:
+    def cancel_order(self, *, client_order_id: Optional[str] = None, order_id: Optional[str] = None) -> Res:
         """
-        Cancel an order by customer or internal ID. Exactly one of custom_id or internal_id must be provided.
+        Cancel an order by client order ID or internal order ID. Exactly one of client_order_id or order_id must be provided.
 
-        `DELETE /v1/orders/{orderID}` if internal ID
+        `DELETE /v1/orders/{orderID}` if order_id (internal).
         or
-        `DELETE /v1/orders/client:{clientOrderID}` if customer ID
+        `DELETE /v1/orders/client:{clientOrderID}` if client_order_id.
 
 
         Request Path Parameters:
-        - custom_id: The client order ID to cancel (e.g. abc123). Optional.
-        - internal_id: The internal order ID to cancel (e.g. 197ec08e001658690721be129e7fa595). Optional.
-        """
-        if (not any((custom_id, internal_id))) or all((custom_id, internal_id)):
-            raise ValueError("Must provide exactly one of custom_id or internal_id")
+        - client_order_id: The client order ID to cancel (e.g. abc123). Optional.
+        - order_id: The internal order ID to cancel (e.g. 197ec08e001658690721be129e7fa595). Optional."""
 
-        path = f"client:{custom_id}" if custom_id else str(internal_id)
+        if (not any((client_order_id, order_id))) or all((client_order_id, order_id)):
+            raise ValueError("Must provide exactly one of client_order_id or order_id")
+
+        path = f"client:{client_order_id}" if client_order_id else str(order_id)
 
         return self.bc.delete(f"/v1/orders/{path}")
 
@@ -230,7 +220,7 @@ class Spot:
         side: str,
         size: Decimal,
         *,
-        custom_id: Optional[str] = None,
+        client_order_id: Optional[str] = None,
         quote_size: Optional[Decimal] = None,
         order_type: Optional[str] = None,
         time_in_force: Optional[str] = None,
@@ -250,7 +240,7 @@ class Spot:
         - side: buy or sell (e.g. "buy").
         - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30).
 
-        - custom_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
+        - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
         - order_type: The order type, “limit” or “market” (e.g. "limit"). Optional, defaults to “limit”.
         - time_in_force: “GTC” or “IOC” - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to “GTC”.
@@ -265,7 +255,7 @@ class Spot:
             "price": str(price),
             "side": side,
             "size": str(size),
-            "clientOrderId": custom_id,
+            "clientOrderId": client_order_id,
             "quoteSize": str(quote_size) if quote_size else None,
             "type": order_type,
             "timeInForce": time_in_force,

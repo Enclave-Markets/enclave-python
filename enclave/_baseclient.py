@@ -24,6 +24,7 @@ class BaseClient:
         self._base_url = base_url
         self.s = requests.Session()
         self.s.auth = ApiAuth(api_key, api_secret)
+        self.s.headers.update({"user-agent": "enclave-python"})
 
     def _request(
         self,
@@ -31,6 +32,7 @@ class BaseClient:
         path: str,
         *,  # enforce keyword after `*`
         body: str = "",
+        params: Optional[dict] = None,
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
@@ -42,47 +44,51 @@ class BaseClient:
 
         url: str = urlparse.urljoin(self._base_url, path).strip("/")
 
-        return self.s.request(method, url, data=body, headers=headers, timeout=timeout)
+        return self.s.request(method, url, data=body, params=params, headers=headers, timeout=timeout)
 
     def get(
         self,
         path: str,
         *,
         body: str = "",
+        params: Optional[dict] = None,
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.GET, path, body=body, headers=headers, timeout=timeout)
+        return self._request(models.GET, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def post(
         self,
         path: str,
         *,
         body: str = "",
+        params: Optional[dict] = None,
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.POST, path, body=body, headers=headers, timeout=timeout)
+        return self._request(models.POST, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def delete(
         self,
         path: str,
         *,
         body: str = "",
+        params: Optional[dict] = None,
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.DELETE, path, body=body, headers=headers, timeout=timeout)
+        return self._request(models.DELETE, path, body=body, params=params, headers=headers, timeout=timeout)
 
     def put(
         self,
         path: str,
         *,
         body: str = "",
+        params: Optional[dict] = None,
         headers: Optional[dict] = None,
         timeout: float = DEFAULT_TIMEOUT_SECS,
     ) -> requests.Response:
-        return self._request(models.PUT, path, body=body, headers=headers, timeout=timeout)
+        return self._request(models.PUT, path, body=body, params=params, headers=headers, timeout=timeout)
 
 
 class ApiAuth(requests.auth.AuthBase):

@@ -17,6 +17,8 @@ class Perps:
 
     Perps REST API has all of the endpoints of Spot REST API,
     except instead of just `/v1/prefix`, perps uses `/v1/perps/` prefix.
+    Perps also contains unique endpoints (superset) such as
+    `/v1/perps/positions`,`/v1/perps/leverages`, `/v1/perps/transfers`, `/v1/perps/balance`, `/v1/perps/funding_rates` etc.
 
     See the Perps API docs:
     https://www.notion.so/enclave-markets/Perps-REST-API-88aecd05936a4aa5ad3860f8d5e2d8e4

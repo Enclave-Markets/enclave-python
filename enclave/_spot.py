@@ -160,7 +160,6 @@ class Spot:
 
         return self.bc.get(path)
 
-    # TODO: maybe move * after market? in general force keyword params?
     def get_fills_csv(
         self, market: Optional[str] = None, *, start_ms: Optional[int] = None, end_ms: Optional[int] = None
     ) -> Res:
@@ -213,7 +212,7 @@ class Spot:
 
         return self.bc.delete(f"/v1/orders/{path}")
 
-    def new_order(
+    def place_order(
         self,
         market: str,
         price: Decimal,

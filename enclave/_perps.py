@@ -18,7 +18,7 @@ class Perps:
     Perps REST API has all of the endpoints of Spot REST API,
     except instead of just `/v1/prefix`, perps uses `/v1/perps/` prefix.
     Perps also contains unique endpoints (superset) such as
-    `/v1/perps/positions`,`/v1/perps/leverages`, `/v1/perps/transfers`, `/v1/perps/balance`, `/v1/perps/funding_rates` etc.
+    `/v1/perps/positions`, `/v1/perps/transfers`, `/v1/perps/balance`, `/v1/perps/funding_rates` etc.
 
     See the Perps API docs:
     https://www.notion.so/enclave-markets/Perps-REST-API-88aecd05936a4aa5ad3860f8d5e2d8e4
@@ -35,13 +35,6 @@ class Perps:
         `GET /v1/perps/positions`"""
 
         return self.bc.get("/v1/perps/positions")
-
-    def get_leverages(self) -> Res:
-        """Gets list of all leverages for all markets
-
-        `GET /v1/perps/leverages`"""
-
-        return self.bc.get("/v1/perps/leverages")
 
     def transfer(self, symbol: str, amount: Union[Decimal, str]) -> Res:
         """Make a transfer between your main wallet and margin account.
@@ -176,6 +169,8 @@ class Perps:
     ) -> Res:
         """Set a stop order for a particular position defined by market and direction.
 
+        Only one stop order can be set per market/position, and set_stop_order creates or updates.
+
         `POST /v1/perps/stop_order`
 
         Request Body Parameters:
@@ -227,6 +222,7 @@ class Perps:
     ) -> Res:
         """
         Get orders that meet the optional parameters.
+        This excludes stop orders which are position specific and have their own endpoint.
 
         `GET /v1/perps/orders`
 
@@ -407,7 +403,7 @@ class Perps:
 
         return self.bc.delete(f"/v1/perps/orders/{path}")
 
-    def new_order(
+    def place_order(
         self,
         market: str,
         price: Decimal,

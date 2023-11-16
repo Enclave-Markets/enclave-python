@@ -213,7 +213,7 @@ class Spot:
 
         return self.bc.delete(f"/v1/orders/{path}")
 
-    def new_order(
+    def place_order(
         self,
         market: str,
         price: Decimal,

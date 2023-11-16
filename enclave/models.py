@@ -25,5 +25,13 @@ LIMIT: Final[str] = "limit"
 MARKET: Final[str] = "market"
 ORDER_TYPES: Final[Set[str]] = {LIMIT, MARKET}
 
+LONG: Final[str] = "long"
+SHORT: Final[str] = "short"
+DIRECTIONS: Final[Set[str]] = {LONG, SHORT}
+
+STOP_LOSS: Final[str] = "stopLoss"
+TAKE_PROFIT: Final[str] = "takeProfit"
+STOP_TYPES: Final[Set[str]] = {STOP_LOSS, TAKE_PROFIT}
+
 
 Res = requests.Response

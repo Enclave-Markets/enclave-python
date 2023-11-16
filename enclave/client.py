@@ -12,8 +12,6 @@ import time
 from decimal import Decimal
 from typing import List, Optional, Union
 
-import requests
-
 from . import _baseclient, _cross, _perps, _spot, models
 from .models import Res
 

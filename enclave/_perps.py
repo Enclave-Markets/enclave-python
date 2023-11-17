@@ -405,9 +405,9 @@ class Perps:
     def place_order(
         self,
         market: str,
-        price: Decimal,
         side: str,
-        size: Decimal,
+        price: Optional[Decimal] = None,
+        size: Optional[Decimal] = None,
         *,
         client_order_id: Optional[str] = None,
         quote_size: Optional[Decimal] = None,
@@ -425,9 +425,10 @@ class Perps:
 
         Request Body Parameters:
         - market: trading market pair (e.g. AVAX-USDC).
-        - price: limit price.  Must be aligned with quoteIncrement from /v1/perps/markets (e.g. 1.55).
         - side: buy or sell (e.g. "buy").
-        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/perps/markets (e.g. 20.30).
+
+        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
+        - price: limit price. Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55). (Not for market orders).
 
         - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
@@ -439,11 +440,21 @@ class Perps:
         if side not in models.SIDES:
             raise ValueError(f"Unsupported side {side=}. Must be one of {models.SIDES}.")
 
+        if (order_type is not models.MARKET and price is None) or (order_type is models.MARKET and price is not None):
+            raise ValueError("Price must (only) be provided for limit orders.")
+
+        if not any((size, quote_size)) or all((size, quote_size)):
+            raise ValueError("Must provide exactly one of size or quote_size for market orders.")
+        if order_type is models.MARKET and side is models.BUY and quote_size is None:
+            raise ValueError("Must provide quote_size for market buy orders.")
+        if order_type is models.MARKET and side is models.SELL and size is None:
+            raise ValueError("Must provide size for market sell orders.")
+
         body = {
             "market": market,
-            "price": str(price),
+            "price": str(price) if price else None,
             "side": side,
-            "size": str(size),
+            "size": str(size) if size else None,
             "clientOrderId": client_order_id,
             "quoteSize": str(quote_size) if quote_size else None,
             "type": order_type,

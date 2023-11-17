@@ -255,10 +255,12 @@ class Spot:
 
         if not any((size, quote_size)) or all((size, quote_size)):
             raise ValueError("Must provide exactly one of size or quote_size for market orders.")
+        if size is None and (
+            (order_type is models.MARKET and side is models.SELL) or (order_type is not models.MARKET)
+        ):
+            raise ValueError("Must provide size for market sell orders and for limit orders.")
         if order_type is models.MARKET and side is models.BUY and quote_size is None:
             raise ValueError("Must provide quote_size for market buy orders.")
-        if order_type is models.MARKET and side is models.SELL and size is None:
-            raise ValueError("Must provide size for market sell orders.")
 
         body = {
             "market": market,

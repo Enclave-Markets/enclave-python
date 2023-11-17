@@ -9,7 +9,8 @@ import logging
 import hmac
 import hashlib
 import time
-
+import dotenv
+import argparse
 
 from enclave.client import Client
 
@@ -25,22 +26,48 @@ class BookLevel(NamedTuple):
     price: Decimal
     size: Decimal
 
+class Config(NamedTuple):
+    market: str
+    bid_size: Decimal
+    ask_size: Decimal
+    min_edge_bps: Decimal
+    max_position: Decimal
+    price_increment: Decimal
+
+avaxConfig = Config(
+    market="AVAX-USD.P",
+    bid_size=Decimal("41.111"),
+    ask_size=Decimal("41.222"),
+    min_edge_bps=Decimal("10"),
+    max_position=Decimal("100"),
+    price_increment=Decimal("0.01"),
+)
+
+ethConfig = Config(
+    market="ETH-USD.P",
+    bid_size=Decimal("0.5111"),
+    ask_size=Decimal("0.5222"),
+    min_edge_bps=Decimal("10"),
+    max_position=Decimal("1"),
+    price_increment=Decimal("1"),
+)
+
 # TODO
 # ✔️ Add logging and output timestamp
 # ✔️ Do websocket ping
 # ✔️ Subscribe to fill messages and logging.info out theoretical PnL
 # - Make it hedge if it can do so with no slippage
 # - Make it handle multiple markets
-# - Make it be smart for api keys
-
-
+# ✔️ Make it be smart for api keys
 
 class TradingBot:
-    def __init__(self, key, secret):
-        self.client = Client(key, secret, base_url="https://api-sandbox.enclave.market")
+    def __init__(self, client: Client, config: Config):
+        self.client = client
         self.last_update = datetime.now()
         self.current_bid = None
         self.current_ask = None
+        self.config = config
+        self.total_theoretical_pnl = Decimal("0")
 
         res = self.client.authed_hello()
         logging.info(res.status_code)
@@ -54,6 +81,9 @@ class TradingBot:
         self.best_ask = best_ask
         self.process()
 
+    def update_position(self, position):
+        self.position = position
+
     def report_fill(self, fill):
         logging.info(f"Fill: {fill}")
         price = Decimal(fill['price'])
@@ -66,15 +96,17 @@ class TradingBot:
         else:
             edge = price - self.mark_price
         theoretical_pnl = size * edge
+        self.total_theoretical_pnl += theoretical_pnl
 
         # calculate edge in basis points
         edge_in_basis_points = edge / self.mark_price * Decimal("10000")
 
+        logging.info(f"Side: {side}, Price: {price}, Mark price: {self.mark_price}, Size: {size}")
         logging.info(f"Edge: {edge}, Edge in bp: {edge_in_basis_points}, Theoretical PnL: ${theoretical_pnl}")
-
+        logging.info(f"Total theoretical pnl: ${self.total_theoretical_pnl}")
         # Clear current orders to force a redo
-        self.best_bid = None
-        self.best_ask = None
+        self.current_bid = None
+        self.current_ask = None
     
     def process(self):
         diff = datetime.now() - self.last_update
@@ -82,41 +114,45 @@ class TradingBot:
             return
         self.last_update = datetime.now()
 
-        my_bid_size = Decimal("17.32")
-        my_ask_size = Decimal("17.33")
-
         logging.info("====Summary====")
         logging.info(f"Mark price: {self.mark_price}")
         logging.info(f"Best bid: {self.best_bid}")
         logging.info(f"Best ask: {self.best_ask}")
         
         
-        logging.info(f"comparison {self.best_bid.size} {my_bid_size} {self.best_bid.size == my_bid_size}")
-        if self.best_bid.size == my_bid_size:
+        logging.info(f"comparison {self.best_bid.size} {self.config.bid_size} {self.best_bid.size == self.config.bid_size}")
+        if self.best_bid.size == self.config.bid_size:
             my_bid = self.best_bid.price
         else:
-            my_bid = self.best_bid.price + Decimal("0.01")
+            my_bid = self.best_bid.price + self.config.price_increment
 
-        if self.best_ask.size == my_ask_size:
+        if self.best_ask.size == self.config.ask_size:
             my_ask = self.best_ask.price
         else:
-            my_ask = self.best_ask.price - Decimal("0.01")
+            my_ask = self.best_ask.price - self.config.price_increment
 
         logging.info(f"My bid: {my_bid}")
         logging.info(f"My ask: {my_ask}")
-        bid_edge = self.mark_price - my_bid
-        ask_edge = my_ask - self.mark_price
-        logging.info(f"Bid edge: {bid_edge}")
-        logging.info(f"Ask edge: {ask_edge}")
+        bid_edge_bps = (self.mark_price - my_bid)/self.mark_price * Decimal("10000")
+        ask_edge_bps = (my_ask - self.mark_price)/self.mark_price * Decimal("10000")
+        logging.info(f"Bid edge bps: {bid_edge_bps}")
+        logging.info(f"Ask edge bps: {ask_edge_bps}")
 
-        min_edge = Decimal(0.05)
-    
-        if bid_edge < min_edge:
-            logging.info(f"Not enough edge for bid {bid_edge} < {min_edge}")
+        if bid_edge_bps < self.config.min_edge_bps:
+            logging.info(f"Not enough edge for bid {bid_edge_bps} < {self.config.min_edge_bps}")
             my_bid = None
-        if ask_edge < min_edge:
-            logging.info(f"Not enough edge for ask {ask_edge} < {min_edge}")
+        if ask_edge_bps < self.config.min_edge_bps:
+            logging.info(f"Not enough edge for ask {ask_edge_bps} < {self.config.min_edge_bps}")
             my_ask = None
+
+        if self.position is not None:
+            if self.position['direction'] == "long" and Decimal(self.position['netQuantity']) > self.config.max_position:
+                logging.info(f"Position too long {self.position['netQuantity']} > {self.config.max_position}")
+                my_bid = None
+            if self.position['direction'] == "short" and Decimal(self.position['netQuantity']) > self.config.max_position:
+                logging.info(f"Position too short {self.position['netQuantity']} > {self.config.max_position}")
+                my_ask = None
+
         self.place_orders(my_bid, my_ask)  
 
         logging.info("====End Summary====")
@@ -131,20 +167,39 @@ class TradingBot:
 
         if my_bid is not None:
             logging.info("Placing bid order")
-            res = self.client.perps.new_order("AVAX-USD.P", my_bid, "buy", "17.32")
+            res = self.client.perps.new_order(self.config.market, my_bid, "buy", self.config.bid_size)
             logging.info(f"Placed order status code {res.status_code}")
             logging.info(res.json())
             self.current_bid = my_bid
         
         if my_ask is not None:
             logging.info("Placing ask order")
-            res = self.client.perps.new_order("AVAX-USD.P", my_ask, "sell", "17.33")
+            res = self.client.perps.new_order(self.config.market, my_ask, "sell", self.config.ask_size)
             logging.info(f"Placed order status code {res.status_code}")
             logging.info(res.json())
             self.current_ask = my_ask  
 
+parser = argparse.ArgumentParser(description="Example program with flags.")
+parser.add_argument('-c', '--config', type=str, help='Which config to use', required=True)
 
-bot = TradingBot("enclaveKeyId_654b8de580e2ec192236593f48b04ed3", "enclaveApiSecret_05b07d2caedb7edebbea5d27e31d9a3c78043a2ef06b736a2b86c56417c33667")
+args = parser.parse_args()
+
+conf = None
+if args.config.lower() == "avax":
+    conf = avaxConfig
+elif args.config.lower() == "eth":
+    conf = ethConfig
+else:
+    raise SystemExit("Please provide a valid config")
+
+envs = dotenv.dotenv_values()
+if envs is None or "key" not in envs or "secret" not in envs:
+    raise SystemExit("Please provide API key and secret in .env file")
+key = str(envs["key"])
+secret = str(envs["secret"])
+
+client = Client(key, secret, base_url="https://api-sandbox.enclave.market")
+bot = TradingBot(client, conf)
 
 last_ping_time = datetime.now()
 
@@ -203,6 +258,11 @@ def on_message(ws, message):
                 bot.update_top_of_book(best_bid, best_ask)
             if data['channel'] == 'fillsPerps':
                 bot.report_fill(data['data'][0])
+            if data['channel'] == 'positionsPerps':
+                for position in data['data']:
+                    if position['market'] == bot.config.market:
+                        bot.update_position(position)
+
     except IndexError as e:
         logging.info("An index error occurred:", e)
         logging.info("Data:", data)
@@ -221,36 +281,27 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     def run(*args):
-        logging.info("opened")
-        # subscribe_message = {
-        #     "op": "subscribe",
-        #     "channel": "prices",
-        # }
-        # ws.send(json.dumps(subscribe_message))
+        logging.info("Websocket opened")
 
-        subscribe_message = {"op":"subscribe","channel":"markPricesPerps","markets":["AVAX-USD.P"]}
+        subscribe_message = {"op":"subscribe","channel":"markPricesPerps","markets":[bot.config.market]}
         ws.send(json.dumps(subscribe_message))
 
-        subscribe_message = {"op":"subscribe","channel":"topOfBooksPerps","markets":["AVAX-USD.P"]}
+        subscribe_message = {"op":"subscribe","channel":"topOfBooksPerps","markets":[bot.config.market]}
         ws.send(json.dumps(subscribe_message))
 
-        signature = generate_signature("enclaveApiSecret_05b07d2caedb7edebbea5d27e31d9a3c78043a2ef06b736a2b86c56417c33667")
+        signature = generate_signature(secret)
         current_time = str(int(time.time() * 1000))
-        key_id = "enclaveKeyId_654b8de580e2ec192236593f48b04ed3"
 
-        msg = {"op": "login","args": {"key": f"{key_id}","time": f"{current_time}","sign": f"{signature}"}}
+        msg = {"op": "login","args": {"key": f"{key}","time": f"{current_time}","sign": f"{signature}"}}
         logging.info(f"Going to send {msg}")
         ws.send(json.dumps(msg))
 
-        subscribe_message = {"op":"subscribe","channel":"fillsPerps","markets":["AVAX-USD.P"]}
+        subscribe_message = {"op":"subscribe","channel":"fillsPerps","markets":[bot.config.market]}
         ws.send(json.dumps(subscribe_message))
 
-    run()
+        ws.send(json.dumps({"op":"subscribe","channel":"positionsPerps"}))
 
-def process_data(mark_price, best_bid, best_ask):
-    logging.info("Mark price:", mark_price)
-    logging.info("Best bid:", best_bid)
-    logging.info("Best ask:", best_ask)
+    run()
 
 if __name__ == "__main__":
     ws = websocket.WebSocketApp("wss://api-sandbox.enclave.market/ws",

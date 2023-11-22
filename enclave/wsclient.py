@@ -19,7 +19,7 @@ SUBSCRIBE: Final[str] = '{{"op":"subscribe", "channel":"{channel}"}}'
 PING: Final[str] = '{"op":"ping"}'
 
 
-def noop(*args: Any, **kwargs: Any) -> None:
+def noop(*_: Any, **__: Any) -> None:
     """No operation."""
     return None
 
@@ -32,16 +32,13 @@ class WebSocketClient:
         self._client: Optional[websockets.WebSocketClientProtocol] = None
         self._pending_subscriptions: Dict[str, Callable] = {}
         self._callbacks: Dict[str, Callable] = defaultdict(lambda: noop)
-        self._lock = asyncio.Lock()
+        self._lock = asyncio.Lock()  # only use from coroutines
 
     @property
     def ws(self) -> websockets.WebSocketClientProtocol:
         if not self._client:
             raise ValueError("Client not connected")
         return self._client
-
-    # async def _connect(self):
-    #     return websockets.connect(self._base_url, ping_interval=15)
 
     def _auth_message(self) -> str:
         timestamp = str(int(time.time() * 1_000))
@@ -51,7 +48,6 @@ class WebSocketClient:
         return json.dumps({"op": "login", "args": {"key": self._key, "time": timestamp, "sign": auth}})
 
     async def run(self) -> None:
-        # await self._connect()
         logger = logging.getLogger("ws")
         logger.setLevel(logging.DEBUG)
         async for ws in websockets.connect(self._base_url, ping_interval=15, logger=logger):
@@ -78,6 +74,12 @@ class WebSocketClient:
         self._pending_subscriptions[channel] = callback
 
     async def subscribe_callback(self, channel: str, callback: Callable) -> None:
+        """Subscribe a callback function to a channel.
+        Also adds the subscription to the pending subscriptions so that it will be resubscribed on reconnect.
+
+        The callback function should take a single argument, the message from the channel, (including the type and channel).
+
+        This function holds the lock."""
         self.add_subscription(channel, callback)  # add for reconnect
 
         self._callbacks[channel] = callback
@@ -102,7 +104,7 @@ if __name__ == "__main__":
         await asyncio.sleep(3)
         await a()
 
-    await asyncio.gather(c.run(), sleep_run(functools.partial(c.subscribe_callback, channel="prices", callback=print)))
+    # await asyncio.gather(c.run(), sleep_run(functools.partial(c.subscribe_callback, channel="prices", callback=print)))
     # await c.run()
 
 # %%

@@ -3,6 +3,7 @@
 Run from base folder using `python -m examples.wsintro`"""
 import asyncio
 import logging
+from typing import Any
 
 import dotenv
 
@@ -25,8 +26,13 @@ if __name__ == "__main__":
         log=logger,
     )
 
+    def bad(msg: dict):
+        """Bad callback to demonstrate how to handle errors."""
+        print(msg)
+        raise RuntimeError("bad")
+
     # add callbacks to be subscribed when the ws client connects
-    ws.add_pending_subscription("prices", print)
+    ws.add_pending_subscription("prices", bad)
     ws.add_pending_subscription("deposits", print)
 
     # run the websocket client until it stops

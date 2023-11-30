@@ -9,7 +9,7 @@ import json
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Callable, Dict, Final, Optional
+from typing import Any, Callable, Dict, Final, Optional, TypeVar
 
 import websockets
 import websockets.legacy.client
@@ -20,8 +20,6 @@ SUBSCRIBE: Final[str] = '{{"op":"subscribe", "channel":"{channel}"}}'
 UNSUBSCRIBE: Final[str] = '{{"op":"unsubscribe", "channel":"{channel}"}}'
 PING: Final[str] = '{"op":"ping"}'
 
-# TODO: on error, on close. deal with reconnecting, and callbacks with errors
-
 
 def noop(*_: Any, **__: Any) -> None:
     """No operation. Accepts any arguments and does nothing."""
@@ -29,6 +27,14 @@ def noop(*_: Any, **__: Any) -> None:
 
 
 Callback = Callable[[dict], None]  # type alias: callback is a function that takes in the message dict.
+
+E = TypeVar("E", bound=BaseException)
+
+
+def wrap_error(err: E, msg: str) -> E:
+    """Add a message to an error."""
+    err.args = (msg, *err.args)
+    return err
 
 
 class WebSocketClient:
@@ -44,17 +50,26 @@ class WebSocketClient:
         api_key: str,
         api_secret: str,
         base_url: str,
+        *,
         log: Optional[logging.Logger] = None,
+        on_connect: Callable[[], None] = noop,
+        on_auth: Callable[[], None] = noop,
+        on_error: Callable[[Exception], None] = noop,
+        on_disconnect: Callable[[], None] = noop,
+        on_exit: Callable[[], None] = noop,
     ):
         self._base_url = base_url
-        self._key = api_key
-        self.__secret = api_secret
+        self._key, self.__secret = api_key, api_secret
         self._client: Optional[websockets.WebSocketClientProtocol] = None
         self._pending_subscriptions: Dict[str, Callback] = {}
         self._callbacks: Dict[str, Callback] = defaultdict(lambda: noop)
         self._lock = asyncio.Lock()  # only use from coroutines
-        self.log = log
+        self.log = log if log else logging.getLogger("enclave.websockets")
         self._stop = False
+
+        self.on_connect, self.on_auth = on_connect, on_auth
+        self.on_disconnect, self.on_exit = on_disconnect, on_exit
+        self.on_error = on_error
 
     @property
     def ws(self) -> websockets.WebSocketClientProtocol:
@@ -77,6 +92,20 @@ class WebSocketClient:
 
         return json.dumps({"op": "login", "args": {"key": self._key, "time": unix_ms, "sign": auth}})
 
+    async def _auth(self, ws: websockets.WebSocketClientProtocol) -> None:
+        try:
+            await ws.send(self._auth_message())
+            msg = await ws.recv()
+            if json.loads(msg) != {"type": "loggedIn"}:
+                raise RuntimeError("Not logged in.")
+            self._client = ws
+        except websockets.ConnectionClosed as e:
+            raise e
+        except Exception as e:  # pylint: disable=W0703
+            self.log.error(wrap_error(e, "Authentication failed"))
+            self.on_error(e)
+            raise e
+
     async def run(self, ping_secs: float = 15) -> bool:
         """Run the websocket client (forever) async.
         Should be run in an existing event loop or with `asyncio.run()` or `asyncio.gather()`.
@@ -88,8 +117,7 @@ class WebSocketClient:
         This function runs forever until
         the websocket connection is closed by setting `self.close()`
         or a fatal error.
-
-        Returns True if the connection was closed by the client, False if it was closed by the server."""
+        """
 
         async for ws in websockets.connect(self._base_url, ping_interval=ping_secs, logger=self.log):
             try:
@@ -97,49 +125,48 @@ class WebSocketClient:
                     # Sets the data for the automatic ping (not strictly necessary).
                     # Uses setattr so mypy doesn't complain we're setting a method of an object.
                     setattr(ws, "ping", functools.partial(ws.ping, data=PING))
-                    await ws.send(self._auth_message())
-                    msg = await asyncio.wait_for(ws.recv(), timeout=20)
-                    if json.loads(msg) != {"type": "loggedIn"}:
-                        raise RuntimeError("Login failed")
-                    self._client = ws
+                    self.on_connect()
+                    await asyncio.wait_for(self._auth(ws), timeout=20)
+                    self.on_auth()
 
                 for channel, callback in self._pending_subscriptions.items():
                     await self.subscribe_callback(channel, callback)  # (re)subscribe all pending subscriptions
 
-                while ws.open:
-                    try:
-                        msg = await ws.recv()
-                    except websockets.ConnectionClosed as e:
-                        if self._stop:
-                            return True
-                        raise e  # break `while` to reconnect
-
-                    try:
-                        msg_json: Dict[str, str] = json.loads(
-                            msg, parse_float=decimal.Decimal, parse_int=decimal.Decimal
-                        )
-                    except json.JSONDecodeError:
-                        continue
-
-                    if msg_json["type"] == "update":
-                        channel = msg_json["channel"]
-                        try:
-                            self._callbacks[channel](msg_json)  # TODO: or pass msg_json["data"]?
-                        except (KeyboardInterrupt, SystemExit) as e:
-                            print(e)
-                            raise
-                        except Exception as e:
-                            print(e)
-                            continue
-
-                    await asyncio.sleep(0)  # yield
+                await self._handle_messages_forever(ws)
 
             except websockets.ConnectionClosed:
                 if self._stop:
-                    return True
-                continue
+                    break  # break the `async for` loop
+            except Exception as e:  # pylint: disable=W0703
+                self.log.error(wrap_error(e, "Error in websocket connection"))
+                self.on_error(e)
+                pass  # continue the `async for` loop and reconnect
 
+            self.on_disconnect()
+
+        self.on_exit()
         return self._stop
+
+    async def _handle_messages_forever(self, ws: websockets.WebSocketClientProtocol) -> None:
+        """Handle messages forever. Used in `run()`."""
+        while not self._stop:
+            try:
+                msg = await ws.recv()
+            except websockets.ConnectionClosed as e:
+                raise e  # break `while` to reconnect
+            try:
+                msg_json: Dict[str, str] = json.loads(msg, parse_float=decimal.Decimal, parse_int=decimal.Decimal)
+
+                if msg_json["type"] == "update":
+                    channel = msg_json["channel"]
+                    self._callbacks[channel](msg_json)  # TODO: or pass msg_json["data"]?
+
+                await asyncio.sleep(0)  # yield
+
+            except (json.JSONDecodeError, Exception) as e:  # pylint: disable=W0703
+                self.log.error(wrap_error(e, f"Error handling message, Data: {msg!r}"))
+                self.on_error(e)
+                continue
 
     async def close(self) -> None:
         """Signal the Client to close the websocket connection."""
@@ -167,7 +194,11 @@ class WebSocketClient:
         async with self._lock:
             try:
                 await self.ws.send(SUBSCRIBE.format(channel=channel))
-            except (RuntimeError, websockets.ConnectionClosed, TypeError):
+            except websockets.ConnectionClosed as e:
+                raise e
+            except Exception as e:  # pylint: disable=W0703
+                self.log.error(wrap_error(e, f"Subscribe failed for channel {channel}"))
+                self.on_error(e)
                 return False
         await asyncio.sleep(0)  # yield
         return True
@@ -184,12 +215,12 @@ class WebSocketClient:
         async with self._lock:
             del self._callbacks[channel]
             try:
-                ws = self.ws
-                await ws.send(UNSUBSCRIBE.format(channel=channel))
-            except (RuntimeError, websockets.ConnectionClosed, TypeError):
+                await self.ws.send(UNSUBSCRIBE.format(channel=channel))
+            except websockets.ConnectionClosed as e:
+                raise e
+            except Exception as e:  # pylint: disable=W0703
+                self.log.error(wrap_error(e, f"Unsubscribe failed for channel {channel}"))
+                self.on_error(e)
                 return False
         await asyncio.sleep(0)  # yield
         return True
-
-
-# %%

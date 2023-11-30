@@ -51,6 +51,9 @@ class WebSocketClient:
     1. Create a client and call `add_pending_subscription` for each subscription before calling `run()`.
     2. Create a client and call `subscribe_callback` asynchronously after calling `run()`.
 
+    Only one callback function can be subscribed to a channel at a time.
+    The newest callback function will replace the existing one.
+
     In addition to the subscription callbacks, there are also hooks for:
     - `on_connect`: called when the websocket connects.
     - `on_auth`: called when the websocket authenticates.
@@ -196,12 +199,16 @@ class WebSocketClient:
             await self.ws.close()
 
     def add_pending_subscription(self, channel: str, callback: Callable) -> None:
-        """Add a subscription to the pending subscriptions to be subscribed on (re)connect."""
+        """Add a subscription to the pending subscriptions to be subscribed on (re)connect.
+
+        This is intended to be called after making a client but before calling run."""
         self._pending_subscriptions[channel] = callback
 
     async def subscribe_callback(self, channel: str, callback: Callback) -> bool:
         """Subscribe a callback function to a channel.
         Also adds the subscription to the pending subscriptions so that it will be resubscribed on reconnect.
+
+        If there is already a callback subscribed to the channel, it will be replaced.
 
         This is meant to be called async after `run()` while the Client is connected.
 

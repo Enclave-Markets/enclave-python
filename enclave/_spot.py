@@ -5,7 +5,7 @@ import json
 from decimal import Decimal
 from typing import Optional
 
-from . import _baseclient, models
+from . import _baseclient
 from .models import Res
 
 
@@ -212,12 +212,12 @@ class Spot:
 
         return self.bc.delete(f"/v1/orders/{path}")
 
-    def place_order(
+    def add_order(
         self,
         market: str,
-        price: Decimal,
         side: str,
-        size: Decimal,
+        price: Optional[Decimal] = None,
+        size: Optional[Decimal] = None,
         *,
         client_order_id: Optional[str] = None,
         quote_size: Optional[Decimal] = None,
@@ -235,9 +235,10 @@ class Spot:
 
         Request Body Parameters:
         - market: trading market pair (e.g. AVAX-USDC).
-        - price: limit price.  Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55).
         - side: buy or sell (e.g. "buy").
-        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30).
+
+        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
+        - price: limit price. Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55). (Not for market orders).
 
         - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
@@ -246,14 +247,11 @@ class Spot:
         - post_only: Whether an order should be prohibited from filling on placement (e.g. True). Optional, defaults to False.
         """
 
-        if side not in models.SIDES:
-            raise ValueError(f"Unsupported side {side=}. Must be one of {models.SIDES}.")
-
         body = {
             "market": market,
-            "price": str(price),
+            "price": str(price) if price else None,
             "side": side,
-            "size": str(size),
+            "size": str(size) if size else None,
             "clientOrderId": client_order_id,
             "quoteSize": str(quote_size) if quote_size else None,
             "type": order_type,

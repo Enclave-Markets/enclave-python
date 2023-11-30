@@ -32,7 +32,10 @@ E = TypeVar("E", bound=BaseException)
 
 
 def wrap_error(err: E, msg: str) -> E:
-    """Add a message to an error."""
+    """Add a message to an error.
+
+    Modifies the error with the message prepended to the error message,
+    and also returns the error."""
     err.args = (msg, *err.args)
     return err
 
@@ -43,6 +46,20 @@ class WebSocketClient:
 
     See Enclave WebSocket Docs:
     https://enclave-markets.notion.site/Common-WebSocket-API-c30db312d36b4bd3a4c77c569db25c4e
+
+    There are two methods to subscribe and hook callback functions to the channel:
+    1. Create a client and call `add_pending_subscription` for each subscription before calling `run()`.
+    2. Create a client and call `subscribe_callback` asynchronously after calling `run()`.
+
+    In addition to the subscription callbacks, there are also hooks for:
+    - `on_connect`: called when the websocket connects.
+    - `on_auth`: called when the websocket authenticates.
+    - `on_disconnect`: called when the websocket disconnects.
+    - `on_exit`: called when the Enclave WebSocketClient exits (after disconnect).
+    - `on_error`: called when an error occurs
+
+    Pass a logger set to DEBUG to log all websocket traffic (including pings).
+
     """
 
     def __init__(
@@ -63,9 +80,13 @@ class WebSocketClient:
         self._client: Optional[websockets.WebSocketClientProtocol] = None
         self._pending_subscriptions: Dict[str, Callback] = {}
         self._callbacks: Dict[str, Callback] = defaultdict(lambda: noop)
-        self._lock = asyncio.Lock()  # only use from coroutines
-        self.log = log if log else logging.getLogger("enclave.websockets")
         self._stop = False
+
+        # only use the lock from coroutines (not thread safe)
+        # the lock ensures coroutines don't have stale references to the client if the `run()` loop reconnects
+        self._lock = asyncio.Lock()
+
+        self.log = log if log else logging.getLogger("enclave.websockets")
 
         self.on_connect, self.on_auth = on_connect, on_auth
         self.on_disconnect, self.on_exit = on_disconnect, on_exit
@@ -138,7 +159,7 @@ class WebSocketClient:
                 if self._stop:
                     break  # break the `async for` loop
             except Exception as e:  # pylint: disable=W0703
-                self.log.error(wrap_error(e, "Error in websocket connection"))
+                self.log.error(wrap_error(e, "Error uncaught in websocket"))
                 self.on_error(e)
                 pass  # continue the `async for` loop and reconnect
 
@@ -153,7 +174,7 @@ class WebSocketClient:
             try:
                 msg = await ws.recv()
             except websockets.ConnectionClosed as e:
-                raise e  # break `while` to reconnect
+                raise e
             try:
                 msg_json: Dict[str, str] = json.loads(msg, parse_float=decimal.Decimal, parse_int=decimal.Decimal)
 

@@ -5,7 +5,7 @@ import json
 from decimal import Decimal
 from typing import Optional
 
-from . import _baseclient, models
+from . import _baseclient
 from .models import Res
 
 
@@ -212,7 +212,7 @@ class Spot:
 
         return self.bc.delete(f"/v1/orders/{path}")
 
-    def place_order(
+    def add_order(
         self,
         market: str,
         side: str,
@@ -246,21 +246,6 @@ class Spot:
         - time_in_force: “GTC” or “IOC” - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to “GTC”.
         - post_only: Whether an order should be prohibited from filling on placement (e.g. True). Optional, defaults to False.
         """
-
-        if side not in models.SIDES:
-            raise ValueError(f"Unsupported side {side=}. Must be one of {models.SIDES}.")
-
-        if (order_type is not models.MARKET and price is None) or (order_type is models.MARKET and price is not None):
-            raise ValueError("Price must (only) be provided for limit orders.")
-
-        if not any((size, quote_size)) or all((size, quote_size)):
-            raise ValueError("Must provide exactly one of size or quote_size for market orders.")
-        if size is None and (
-            (order_type is models.MARKET and side is models.SELL) or (order_type is not models.MARKET)
-        ):
-            raise ValueError("Must provide size for market sell orders and for limit orders.")
-        if order_type is models.MARKET and side is models.BUY and quote_size is None:
-            raise ValueError("Must provide quote_size for market buy orders.")
 
         body = {
             "market": market,

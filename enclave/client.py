@@ -232,7 +232,7 @@ class Client:
 
                 Requires: view."""
 
-        body = f'{{ "coins": {coins} }}'
+        body = json.dumps({"coins": coins})
         return self.baseclient.post("/v0/wallet/deposit_address/list", body=body)
 
     def get_deposits(self) -> requests.Response:

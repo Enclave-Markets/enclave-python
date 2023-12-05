@@ -1,6 +1,9 @@
-# Enclave Python SDK
+# Enclave Python
 
-This is the Python SDK for Enclave. It provides a simple interface for interacting with the
+This is the official Python SDK for
+[Enclave Markets](https://enclave.market/).
+
+It provides a simple interface for interacting with the
 [Enclave API](https://docs.enclave.market/).
 
 ## Support

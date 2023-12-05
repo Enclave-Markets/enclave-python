@@ -27,3 +27,7 @@ jobs:
         run: |
           pip install mypy
           mypy --install-types --non-interactive --strict --allow-any-generics ./enclave
+      - name: Test build Python
+        run: |
+          pip install poetry
+          poetry build

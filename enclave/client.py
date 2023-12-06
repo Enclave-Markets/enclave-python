@@ -114,7 +114,7 @@ class Client:
         Request:
         `{ "coins": ["AVAX", "ETH"] }` list of strings of coin symbols, required."""
 
-        body = f'{{ "coins": {coins} }}'
+        body = json.dumps({"coins": coins})
         return self.bc.post("/v0/wallet/deposit_address/list", body=body)
 
     def get_deposits(self) -> Res:

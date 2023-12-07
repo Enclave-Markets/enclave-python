@@ -1,7 +1,7 @@
-# Can be run either as an interactive notebook in VSCode using IPython,
-# or as a normal python script from the base directory with `python -m examples.common`
-
-
+"""
+Can be run either as an interactive notebook in VSCode using IPython,
+or as a normal python script from the base directory with `python -m examples.common`
+"""
 # %% [markdown]
 # # Common REST API Demo
 #
@@ -80,21 +80,21 @@ API_KEY: str = ""
 API_SECRET: str = ""
 
 # 2. as environment variables
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     # try:
     env_key, env_secret = os.getenv("ENCLAVE_API_KEY"), os.getenv("ENCLAVE_API_SECRET")
     API_KEY = env_key if env_key else ""
     API_SECRET = env_secret if env_secret else ""
 
 # 3. from a .env file with `key` and `secret` set.
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     import dotenv
 
     envs = dotenv.dotenv_values("dev.env")
     if envs and "key" in envs and "secret" in envs:
         API_KEY, API_SECRET = str(envs["key"]), str(envs["secret"])
 
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     raise ValueError("Please provide API_KEY and API_SECRET")
 
 # %% [markdown]

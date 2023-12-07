@@ -1,5 +1,7 @@
 # %%
 """Websocket Client for Enclave Markets."""
+from __future__ import annotations  # self type only 3.11+
+
 import asyncio
 import decimal
 import functools
@@ -7,6 +9,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import time
 from collections import defaultdict
 from typing import Any, Callable, Dict, Final, Optional, TypeVar
@@ -95,6 +98,37 @@ class WebSocketClient:
         self.on_disconnect, self.on_exit = on_disconnect, on_exit
         self.on_error = on_error
 
+    @classmethod
+    def from_api_file(
+        cls,
+        api_path: str,
+        base_url: str,
+        *,
+        log: Optional[logging.Logger] = None,
+        on_connect: Callable[[], None] = noop,
+        on_auth: Callable[[], None] = noop,
+        on_error: Callable[[Exception], None] = noop,
+        on_disconnect: Callable[[], None] = noop,
+        on_exit: Callable[[], None] = noop,
+    ) -> WebSocketClient:
+        """Create a WebSocketClient from a file with the key id on the first line and the api secret on the second line."""
+        path = os.path.normpath(api_path)
+        with open(path, "r", encoding="utf8") as api_file:
+            api_key: str = api_file.readline().strip()
+            api_secret: str = api_file.readline().strip()
+
+        return cls(
+            api_key,
+            api_secret,
+            base_url,
+            log=log,
+            on_connect=on_connect,
+            on_auth=on_auth,
+            on_error=on_error,
+            on_disconnect=on_disconnect,
+            on_exit=on_exit,
+        )
+
     @property
     def ws(self) -> websockets.WebSocketClientProtocol:
         """Get the websocket client. Raises RuntimeError if client not set.
@@ -160,6 +194,7 @@ class WebSocketClient:
 
             except websockets.ConnectionClosed:
                 if self._stop:
+                    self.on_disconnect()
                     break  # break the `async for` loop
             except Exception as e:  # pylint: disable=W0703
                 self.log.error(wrap_error(e, "Error uncaught in websocket"))

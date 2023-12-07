@@ -14,6 +14,11 @@ DEV: Final[str] = "https://api-dev.enclavemarket.dev"
 PROD: Final[str] = "https://api.enclave.market"
 SANDBOX: Final[str] = "https://api-sandbox.enclave.market"
 
+WS_DEV: Final[str] = "wss://api-dev.enclavemarket.dev/ws"
+WS_PROD: Final[str] = "wss://api.enclave.market/ws"
+WS_SANDBOX: Final[str] = "wss://api-sandbox.enclave.market/ws"
+
+
 BUY: Final[str] = "buy"
 SELL: Final[str] = "sell"
 SIDES: Final[Set[str]] = {BUY, SELL}

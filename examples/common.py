@@ -1,3 +1,7 @@
+# Can be run either as an interactive notebook in VSCode using IPython,
+# or as a normal python script from the base directory with `python -m examples.common`
+
+
 # %% [markdown]
 # # Common REST API Demo
 #

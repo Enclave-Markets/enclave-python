@@ -1,3 +1,7 @@
+"""
+Can be run either as an interactive notebook in VSCode using IPython,
+or as a normal python script from the base directory with `python -m examples.common`
+"""
 # %% [markdown]
 # # Common REST API Demo
 #
@@ -76,21 +80,21 @@ API_KEY: str = ""
 API_SECRET: str = ""
 
 # 2. as environment variables
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     # try:
     env_key, env_secret = os.getenv("ENCLAVE_API_KEY"), os.getenv("ENCLAVE_API_SECRET")
     API_KEY = env_key if env_key else ""
     API_SECRET = env_secret if env_secret else ""
 
 # 3. from a .env file with `key` and `secret` set.
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     import dotenv
 
     envs = dotenv.dotenv_values("dev.env")
     if envs and "key" in envs and "secret" in envs:
         API_KEY, API_SECRET = str(envs["key"]), str(envs["secret"])
 
-if not (all([API_KEY, API_SECRET])):
+if not all([API_KEY, API_SECRET]):
     raise ValueError("Please provide API_KEY and API_SECRET")
 
 # %% [markdown]
@@ -202,12 +206,24 @@ WITHDRAW_AMOUNT = decimal.Decimal(0.01)
 withdrawal_res = client.withdraw(withdrawal_addr, WITHDRAW_AMOUNT, str(int(time.time())), "AVAX").json()
 print(f"withdrawal: {withdrawal_res}")
 
+withdrawal_id = withdrawal_res["result"]["withdrawal_id"]
+customer_withdrawal_id = withdrawal_res["result"]["customer_withdrawal_id"]
+
 
 # %%
 # there is a withdrawal now
 withdrawals = client.get_withdrawals().json()
 print(f"withdrawals: {withdrawals=}")
+
 # get by txid
 txid_withdrawal = withdrawals["result"][0]["txid"]
-withdrawal_res = client.get_withdrawal(txid_withdrawal).json()
+withdrawal_res = client.get_withdrawal_by_txid(txid_withdrawal).json()
 print(f"\nwithdrawal by txid: {withdrawal_res}")
+
+# get by internal id
+withdrawal_res_by_id = client.get_withdrawal(internal_id=withdrawal_id).json()
+print(f"\nwithdrawal by id: {withdrawal_res_by_id}")
+
+# get by customer id
+withdrawal_res_by_cid = client.get_withdrawal(custom_id=customer_withdrawal_id).json()
+print(f"\nwithdrawal by customer id: {withdrawal_res_by_cid}")

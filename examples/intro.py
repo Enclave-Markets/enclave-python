@@ -1,22 +1,23 @@
 # %%
 """Getting started with the Enclave Python Package.
 Run from base folder using `python -m examples.intro`"""
+import os
 import time
 from decimal import Decimal
-
-import dotenv
 
 import enclave.models
 from enclave.client import Client
 
 if __name__ == "__main__":
     # For more auth options, see auth.py
-    envs = dotenv.dotenv_values("dev.env")
-    api_key, api_secret = str(envs["key"]), str(envs["secret"])
+
+    # load environment variables
+    API_KEY = str(os.getenv("enclave_key"))
+    API_SECRET = str(os.getenv("enclave_secret"))
 
     # create a client
-    client = Client(api_key, api_secret, enclave.models.DEV)
-    print(client.authed_hello().text)
+    client = Client(API_KEY, API_SECRET, enclave.models.DEV)
+    print(client.authed_hello().json())
 
     # get the balance of AVAX
     balance = Decimal(client.get_balance("AVAX").json()["result"]["freeBalance"])
@@ -48,6 +49,7 @@ if __name__ == "__main__":
         order_type=enclave.models.LIMIT,
         client_order_id=custom_id,
     ).json()["result"]
+    print(f"{sell_order=}")
 
     # cancel all orders in the market
     cancel_res = client.spot.cancel_orders("AVAX-USDC").json()
@@ -58,6 +60,3 @@ if __name__ == "__main__":
     print(f"{order_status['result']=}")
     filled_size = Decimal(order_status["result"]["filledSize"])
     print(f"{filled_size=}")
-
-
-# %%

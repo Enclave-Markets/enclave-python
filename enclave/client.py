@@ -21,7 +21,7 @@ class Client:
     as well as a reference to Cross, Perps, and Spot objects to make requests to each.
     It contains a BaseClient object to make requests to the API.
 
-    See (the Enclave docs)[https://docs.enclave.market] for more information.
+    See the [Enclave docs](https://docs.enclave.market) for more information.
 
     Usage is Client(...).a_common_endpoint(...) for common endpoints and
     Client(...).cross.a_cross_endpoint(...) for cross endpoints, etc.

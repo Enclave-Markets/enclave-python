@@ -1,42 +1,63 @@
 # %%
 """Getting started with the Enclave Python Package.
 Run from base folder using `python -m examples.intro`"""
+import time
+from decimal import Decimal
+
 import dotenv
 
 import enclave.models
 from enclave.client import Client
 
 if __name__ == "__main__":
+    # For more auth options, see auth.py
+    envs = dotenv.dotenv_values("dev.env")
+    api_key, api_secret = str(envs["key"]), str(envs["secret"])
 
-    def hello_requests(c: Client) -> None:
-        """Uses a provided client to make some requests to the Enclave API."""
-        res = c.bc.get("/hello")  # would break execution if throws error
-        if res.ok:
-            print(res.json())
-        else:
-            print(res.text)
+    # create a client
+    client = Client(api_key, api_secret, enclave.models.DEV)
+    print(client.authed_hello().text)
 
-        res = c.authed_hello()
-        if res.ok:
-            print(res.json())
-        else:
-            print(res.text)
+    # get the balance of AVAX
+    balance = Decimal(client.get_balance("AVAX").json()["result"]["freeBalance"])
+    print(f"Free AVAX balance: {balance=}")
 
-    # First way to make a client: from key and secret
-    # Load environment variables from .env file
-    # .env file should contain key=enclaveKeyId_... on one line and secret=enclaveApiSecret_... on another
-    envs = dotenv.dotenv_values()
-    if envs and "key" in envs and "secret" in envs:
-        api_key, api_secret = str(envs["key"]), str(envs["secret"])
-    else:
-        api_key, api_secret = input("Provide API key: "), input("Provide API secret: ")  # or hardcode here
+    # get the AVAX-USDC trading pair to find the min order sizes
+    spot_trading_pairs = client.get_markets().json()["result"]["spot"]["tradingPairs"]
+    avax_trading_pair = [pairs for pairs in spot_trading_pairs if pairs["market"] == "AVAX-USDC"][0]
+    print(f"{avax_trading_pair=}")
+    avax_base_min, avax_quote_min = Decimal(avax_trading_pair["baseIncrement"]), Decimal(
+        avax_trading_pair["quoteIncrement"]
+    )
+    print(f"{avax_base_min=} {avax_quote_min=}")
 
-    c0 = Client(api_key, api_secret, enclave.models.DEV)
-    hello_requests(c0)
+    # get top of book for avax usdc
+    avax_top_of_book = client.spot.get_depth("AVAX-USDC", depth=1).json()["result"]
+    print(f"{avax_top_of_book=}")
+    avax_ask_price, avax_ask_size = (Decimal(x) for x in avax_top_of_book["asks"][0])
+    print(f"{avax_ask_price=}, {avax_ask_size=}")
 
-    # Second way to make a client: from an API file
-    PATH_TO_ENV_FILE = input(
-        "Provide full path to API file containing key and secret separated by newline: "
-    )  # or hardcode here
-    c1 = Client.from_api_file(PATH_TO_ENV_FILE, enclave.models.DEV)
-    hello_requests(c1)
+    # place a sell limit order of the smallest size one tick above the top of book (so we don't get filled)
+    assert balance >= avax_base_min
+    custom_id = f"demo{int(time.time())}"
+    sell_order = client.spot.add_order(
+        "AVAX-USDC",
+        enclave.models.SELL,
+        avax_ask_price + avax_quote_min,
+        avax_base_min,
+        order_type=enclave.models.LIMIT,
+        client_order_id=custom_id,
+    ).json()["result"]
+
+    # cancel all orders in the market
+    cancel_res = client.spot.cancel_orders("AVAX-USDC").json()
+    print(f"{cancel_res=}")
+
+    # get the order status
+    order_status = client.spot.get_order(client_order_id=custom_id).json()
+    print(f"{order_status['result']=}")
+    filled_size = Decimal(order_status["result"]["filledSize"])
+    print(f"{filled_size=}")
+
+
+# %%

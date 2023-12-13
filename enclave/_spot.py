@@ -15,8 +15,9 @@ class Spot:
     Designed to be used as `Client(...).spot.a_spot_endpoint(...)`
     and not imported directly.
 
-    See the Spot API docs
-    https://enclave-markets.notion.site/Spot-REST-API-2a929f6266ff45aaa559bc8a3f34a308"""
+    See the
+    [Spot API docs](https://enclave-markets.notion.site/Spot-REST-API-2a929f6266ff45aaa559bc8a3f34a308)
+    """
 
     def __init__(self, base_client: _baseclient.BaseClient):
         self.bc = base_client

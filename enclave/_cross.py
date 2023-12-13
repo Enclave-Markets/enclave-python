@@ -5,7 +5,7 @@ cross contains the Cross specific API and calls an instance of BaseClient to mak
 import json
 import re
 from decimal import Decimal
-from typing import Optional, Union
+from typing import Optional
 
 from . import _baseclient
 from .models import Res
@@ -195,3 +195,24 @@ class Cross:
             body["end_time"] = end_secs
 
         return self.bc.post("/v0/fills/csv", body=json.dumps(body))
+
+    def get_price(self, pair: str) -> Res:
+        """Gets the price of a specific trading pair
+
+        `POST /v0/price`
+
+        Request body parameters:
+        - pair: the currency pair to trade (e.g. AVAX-ETH, separator can be /,_,-).
+        """
+        base, quote = re.split(r"[-/_]", pair)
+        body = {
+            "pair": {"base": base, "quote": quote},
+        }
+
+        return self.bc.post("/v0/price", body=json.dumps(body))
+
+    def get_prices(self) -> Res:
+        """Gets the prices of all trading pairs
+
+        `GET /v0/prices`"""
+        return self.bc.get("/v0/prices")

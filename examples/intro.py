@@ -8,17 +8,9 @@ from decimal import Decimal
 import enclave.models
 from enclave.client import Client
 
-if __name__ == "__main__":
-    # For more auth options, see auth.py
 
-    # load environment variables
-    API_KEY = str(os.getenv("enclave_key"))
-    API_SECRET = str(os.getenv("enclave_secret"))
-
-    # create a client
-    client = Client(API_KEY, API_SECRET, enclave.models.DEV)
-    print(client.authed_hello().json())
-
+def spot(client: Client) -> None:
+    """Demonstrate some spot trading functionality."""
     # get the balance of AVAX
     balance = Decimal(client.get_balance("AVAX").json()["result"]["freeBalance"])
     print(f"Free AVAX balance: {balance=}")
@@ -60,3 +52,45 @@ if __name__ == "__main__":
     print(f"{order_status['result']=}")
     filled_size = Decimal(order_status["result"]["filledSize"])
     print(f"{filled_size=}")
+
+
+def perps(client: Client) -> None:
+    """Demonstrate some perps trading functionality."""
+    # get USDC balance
+    usdc_balance = Decimal(client.get_balance("USDC").json()["result"]["freeBalance"])
+    print(f"Free USDC balance: {usdc_balance=}")
+
+    # transfer USDC from the main account to perps
+    assert usdc_balance >= Decimal(1)
+    margin_deposit = client.perps.transfer("USDC", Decimal(1)).json()
+    print(f"{margin_deposit=}")
+    margin_balance = client.perps.get_balance().json()
+    print(f"{margin_balance=}")
+
+    margin_withdraw = client.perps.transfer("USDC", Decimal(-1)).json()
+    print(f"{margin_withdraw=}")
+    margin_balance = client.perps.get_balance().json()
+    print(f"{margin_balance=}")
+
+
+if __name__ == "__main__":
+    # For more auth options, see auth.py
+
+    # load environment variables
+    API_KEY = str(os.getenv("enclave_key"))
+    API_SECRET = str(os.getenv("enclave_secret"))
+
+    # create a client
+    enclave_client = Client(API_KEY, API_SECRET, enclave.models.DEV)
+    if not enclave_client.wait_until_ready():
+        raise RuntimeError("Enclave not connecting.")
+    authed_hello = enclave_client.authed_hello().json()
+    print(f"{authed_hello=}")
+
+    # run the spot example
+    print(f"\nRunning spot example...\n{'*' * 80}")
+    spot(enclave_client)
+
+    # run the perps example
+    print(f"\nRunning perps example...\n{'*' * 80}")
+    perps(enclave_client)

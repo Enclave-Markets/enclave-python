@@ -238,8 +238,8 @@ class Spot:
         - market: trading market pair (e.g. AVAX-USDC).
         - side: buy or sell (e.g. "buy").
 
-        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
         - price: limit price. Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55). (Not for market orders).
+        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
 
         - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.

@@ -1,3 +1,4 @@
+# %%
 """
 client implements the Enclave API and contains an instance of Cross, Perps, and Spot to make requests.
 

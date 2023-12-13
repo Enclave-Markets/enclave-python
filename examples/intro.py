@@ -11,6 +11,7 @@ from enclave.client import Client
 
 def spot(client: Client) -> None:
     """Demonstrate some spot trading functionality."""
+
     # get the balance of AVAX
     balance = Decimal(client.get_balance("AVAX").json()["result"]["freeBalance"])
     print(f"Free AVAX balance: {balance=}")
@@ -56,6 +57,7 @@ def spot(client: Client) -> None:
 
 def perps(client: Client) -> None:
     """Demonstrate some perps trading functionality."""
+
     # get USDC balance
     usdc_balance = Decimal(client.get_balance("USDC").json()["result"]["freeBalance"])
     print(f"Free USDC balance: {usdc_balance=}")
@@ -71,6 +73,47 @@ def perps(client: Client) -> None:
     print(f"{margin_withdraw=}")
     margin_balance = client.perps.get_balance().json()
     print(f"{margin_balance=}")
+
+
+def cross(client: Client) -> None:
+    """Demonstrate some cross trading functionality."""
+
+    # get the balance of AVAX
+    balance = Decimal(client.get_balance("USDC").json()["result"]["freeBalance"])
+    print(f"Free USDC balance: {balance=}")
+
+    # get the AVAX-USDC trading pair to find the min order sizes for cross
+    cross_configs = client.get_markets().json()["result"]["tokenConfig"]
+    usdc_trading_pair = [token for token in cross_configs if token["id"] == "USDC"][0]
+    print(f"{usdc_trading_pair=}")
+    # doing a buy order so we need the sizes for the quote currency, USDC
+    min_usdc, max_usdc = Decimal(usdc_trading_pair["minOrderSize"]), Decimal(usdc_trading_pair["maxOrderSize"])
+    print(f"{min_usdc=} {max_usdc=}")
+
+    # get the oracle price for AVAX-USDC
+    avax_usdc_price = Decimal(client.cross.get_price("AVAX-USDC").json()["result"]["price"])
+    print(f"{avax_usdc_price=}")
+
+    # buy AVAX for USDC at no more than the current price + $1
+    assert min_usdc <= balance <= max_usdc
+    custom_id = f"demo{int(time.time())}"
+    buy_order = client.cross.add_order(
+        "AVAX-USDC",
+        enclave.models.BUY,
+        min_usdc,
+        cancel_above=avax_usdc_price + Decimal(1),
+        customer_order_id=custom_id,
+    ).json()
+    print(f"{buy_order=}")
+
+    # cancel order
+    cancel_res = client.cross.cancel_order(customer_order_id=custom_id).json()
+    print(f"{cancel_res=}")
+
+    # get the order details
+    order_status = client.cross.get_order(customer_order_id=custom_id).json()["result"]
+    print(f"{order_status=}")
+    print(f"amount filled: {order_status['filledSize']=}, status: {order_status['status']=}")
 
 
 if __name__ == "__main__":
@@ -94,3 +137,9 @@ if __name__ == "__main__":
     # run the perps example
     print(f"\nRunning perps example...\n{'*' * 80}")
     perps(enclave_client)
+
+    # run the cross example
+    print(f"\nRunning cross example...\n{'*' * 80}")
+    cross(enclave_client)
+
+    print("\nHave a nice day! (Thank you!)")

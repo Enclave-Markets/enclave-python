@@ -18,6 +18,22 @@ This is the official Python SDK for
 It provides a simple interface for interacting with the
 [Enclave API](https://docs.enclave.market/).
 
+## Installation
+
+```bash
+pip install enclave
+```
+
+## Usage
+
+```python
+from enclave.client import Client
+import enclave.models
+
+client = Client("", "", enclave.models.PROD)
+print(client.wait_until_ready()) # should print True
+```
+
 ## Support
 
 Supports Python 3.8+.

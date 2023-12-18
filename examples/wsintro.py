@@ -4,8 +4,6 @@ Run from base folder using `python -m examples.wsintro`"""
 import asyncio
 import os
 
-import dotenv
-
 from enclave.wsclient import WebSocketClient
 
 
@@ -28,12 +26,17 @@ async def subscribe_unsubscribe_prices(ws_client: WebSocketClient):
     await ws_client.unsubscribe_callback("prices")
 
 
+async def close_after_5s(ws_client: WebSocketClient):
+    """Demonstrate closing the websocket client after 5 seconds."""
+    await asyncio.sleep(5)
+    await ws_client.close()
+
+
 async def main() -> None:
+    """Demonstrate some websocket functionality."""
     # For more auth options, see auth.py
 
     # load environment variables
-    dotenv.load_dotenv("dev.env")
-
     API_KEY = str(os.getenv("enclave_key"))
     API_SECRET = str(os.getenv("enclave_secret"))
 
@@ -52,7 +55,11 @@ async def main() -> None:
     # add callbacks to be subscribed when the ws client connects
     ws.add_pending_subscription("deposits", print)
 
-    await asyncio.gather(ws.run(), subscribe_unsubscribe_prices(ws))
+    await asyncio.gather(
+        ws.run(),
+        subscribe_unsubscribe_prices(ws),
+        close_after_5s(ws),
+    )
 
 
 if __name__ == "__main__":

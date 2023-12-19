@@ -160,6 +160,7 @@ class WebSocketClient:
 
             except websockets.ConnectionClosed:
                 if self._stop:
+                    self.on_disconnect()
                     break  # break the `async for` loop
             except Exception as e:  # pylint: disable=W0703
                 self.log.error(wrap_error(e, "Error uncaught in websocket"))

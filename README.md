@@ -40,10 +40,9 @@ print(client.wait_until_ready()) # should print True
 buy_order = client.perps.add_order(
     "BTC-USD.P",
     enclave.models.BUY,
-    buy_price,
-    buy_size,
+    Decimal(42_000),
+    Decimal(0.1),
     order_type=enclave.models.LIMIT,
-    client_order_id=f"demo{int(time.time())}",
 )
 ```
 

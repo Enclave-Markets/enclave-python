@@ -33,7 +33,7 @@ def spot(client: Client) -> None:
 
     # place a sell limit order of the smallest size one tick above the top of book (so we don't get filled)
     assert balance >= avax_base_min
-    custom_id = f"demo{int(time.time())}"
+    custom_id = f"demo{int(time.time_ns())}"
     sell_order = client.spot.add_order(
         "AVAX-USDC",
         enclave.models.SELL,
@@ -97,7 +97,7 @@ def perps(client: Client) -> None:
     buy_size = btcusd_base_increment
     assert available_margin * btcusd_leverage >= buy_price * buy_size
 
-    custom_id = f"demo{int(time.time())}"
+    custom_id = f"demo{int(time.time_ns())}"
     buy_order = client.perps.add_order(
         "BTC-USD.P",
         enclave.models.BUY,
@@ -145,7 +145,7 @@ def cross(client: Client) -> None:
 
     # buy AVAX for USDC at no more than the current price + $1
     assert min_usdc <= balance <= max_usdc
-    custom_id = f"demo{int(time.time())}"
+    custom_id = f"demo{int(time.time_ns())}"
     buy_order = client.cross.add_order(
         "AVAX-USDC",
         enclave.models.BUY,

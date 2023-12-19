@@ -18,6 +18,44 @@ This is the official Python SDK for
 It provides a simple interface for interacting with the
 [Enclave API](https://docs.enclave.market/).
 
+## Installation
+
+```bash
+pip install enclave
+```
+
+## Usage
+
+```python
+from enclave.client import Client
+import enclave.models
+
+client = Client("", "", enclave.models.PROD)
+print(client.wait_until_ready()) # should print True
+```
+
+### Perps Order
+
+```python
+buy_order = client.perps.add_order(
+    "BTC-USD.P",
+    enclave.models.BUY,
+    Decimal(42_000),
+    Decimal(0.1),
+    order_type=enclave.models.LIMIT,
+)
+```
+
+## Examples
+
+See the [examples](examples) directory for more examples.
+
+Rest API examples can be found in [intro.py](examples/intro.py).
+Run from the root directory with `python -m examples.intro`.
+
+Websocket API examples can be found in [wsintro.py](examples/wsintro.py).
+Run from the root directory with `python -m examples.wsintro`.
+
 ## Support
 
 Supports Python 3.8+.

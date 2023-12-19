@@ -34,6 +34,29 @@ client = Client("", "", enclave.models.PROD)
 print(client.wait_until_ready()) # should print True
 ```
 
+### Perps Order
+
+```python
+buy_order = client.perps.add_order(
+    "BTC-USD.P",
+    enclave.models.BUY,
+    buy_price,
+    buy_size,
+    order_type=enclave.models.LIMIT,
+    client_order_id=f"demo{int(time.time())}",
+)
+```
+
+## Examples
+
+See the [examples](examples) directory for more examples.
+
+Rest API examples can be found in [intro.py](examples/intro.py).
+Run from the root directory with `python -m examples.intro`.
+
+Websocket API examples can be found in [wsintro.py](examples/wsintro.py).
+Run from the root directory with `python -m examples.wsintro`.
+
 ## Support
 
 Supports Python 3.8+.

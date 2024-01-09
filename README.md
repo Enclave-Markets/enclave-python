@@ -18,6 +18,8 @@ This is the official Python SDK for
 It provides a simple interface for interacting with the
 [Enclave API](https://docs.enclave.market/).
 
+Find our easy [Colab Demo](https://colab.research.google.com/drive/1Op5v4GuJozd6UvS2c7cXV0r6hswl4SVv) here.
+
 ## Installation
 
 ```bash
@@ -55,6 +57,8 @@ Run from the root directory with `python -m examples.intro`.
 
 Websocket API examples can be found in [wsintro.py](examples/wsintro.py).
 Run from the root directory with `python -m examples.wsintro`.
+
+Hosted [demo on Google Colab](https://colab.research.google.com/drive/1Op5v4GuJozd6UvS2c7cXV0r6hswl4SVv) for ease of use, including expected output.
 
 ## Support
 

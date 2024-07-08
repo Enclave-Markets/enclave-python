@@ -4,7 +4,7 @@
     <a href="https://github.com/Enclave-Markets/enclave-python" alt="enclave python">
         <img src="https://edent.github.io/SuperTinyIcons/images/svg/github.svg" width="50" /></a>
     <a href="https://pypi.org/project/enclave/">
-        <img src="https://pypi.org/static/images/logo-small.2a411bc6.svg" width="50"/></a>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/PyPI-Logo-notext.svg" width="50"/></a>
     <a href="https://twitter.com/enclavemarkets" alt="Enclave Twitter">
         <img src="https://edent.github.io/SuperTinyIcons/images/svg/x.svg" width="50"/></a>
     <a href="https://www.enclave.market/" alt="Enclave Market">

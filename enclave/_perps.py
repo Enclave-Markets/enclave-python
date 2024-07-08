@@ -47,7 +47,28 @@ class Perps:
         - symbol: currency symbol (e.g. AVAX).
         - amount: amount to transfer (e.g. 100.0)."""
 
-        body = {"symbol": symbol, "amount": str(amount)}
+        if Decimal(amount) < Decimal(0):
+            body = {
+                "symbol": symbol,
+                "amount": str(Decimal(amount).copy_abs()), 
+                "from": {
+                    "wallet": "margin"
+                },
+                "to": {
+                    "wallet": "main"
+                }
+            }
+        else:
+            body = {
+                "symbol": symbol,
+                "amount": str(amount), 
+                "from": {
+                    "wallet": "main"
+                },
+                "to": {
+                    "wallet": "margin"
+                }
+            }
         return self.bc.post("/v1/perps/transfers", body=json.dumps(body))
 
     def get_balance(self) -> Res:

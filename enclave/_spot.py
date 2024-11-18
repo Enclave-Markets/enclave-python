@@ -150,16 +150,16 @@ class Spot:
         Fills by Order ID
         Exactly one of client_order_id (clientOrderID) or internal order_id (orderID) must be provided.
 
-        `GET /v1/fills/client:{clientOrderID}` if client_order_id
+        `GET /v1/orders/client:{orderID}/fills` if client_order_id
         or
         `GET /v1/orders/{orderID}/fills` if order_id (internal)"""
 
         if (not any((client_order_id, order_id))) or all((client_order_id, order_id)):
             raise ValueError("Must provide exactly one of client_order_id or order_id")
 
-        path = f"/v1/fills/client:{client_order_id}" if client_order_id else f"/v1/orders/{order_id}/fills"
+        path = f"client:{client_order_id}" if client_order_id else order_id
 
-        return self.bc.get(path)
+        return self.bc.get(f"/v1/orders/{path}/fills")
 
     def get_fills_csv(
         self, market: Optional[str] = None, *, start_ms: Optional[int] = None, end_ms: Optional[int] = None

@@ -367,9 +367,9 @@ class Perps:
         if (not any((client_order_id, order_id))) or all((client_order_id, order_id)):
             raise ValueError("Must provide exactly one of client_order_id or order_id")
 
-        path = f"/v1/perps/fills/client:{client_order_id}" if client_order_id else f"/v1/perps/orders/{order_id}/fills"
+        path = f"client:{client_order_id}" if client_order_id else order_id
 
-        return self.bc.get(path)
+        return self.bc.get(f"/v1/perps/orders/{path}/fills")
 
     def get_fills_csv(
         self, market: Optional[str] = None, *, start_ms: Optional[int] = None, end_ms: Optional[int] = None

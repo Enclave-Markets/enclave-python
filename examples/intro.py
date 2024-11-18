@@ -54,6 +54,28 @@ def spot(client: Client) -> None:
     filled_size = Decimal(order_status["filledSize"])
     print(f"{filled_size=}")
 
+    # cause a trade and query fills
+    custom_id = f"demo{int(time.time_ns())}"
+    sell_order = client.spot.add_order(
+        "AVAX-USDC",
+        enclave.models.SELL,
+        None,
+        avax_base_min,
+        order_type=enclave.models.MARKET,
+        client_order_id=custom_id,
+    ).json()["result"]
+
+    print(f"{sell_order=}")
+    
+    fills_by_custom_id = client.spot.get_fills_by_id(client_order_id=custom_id).json()["result"]
+    print(f"found {len(fills_by_custom_id)} fills by custom id")
+
+    fills_by_order_id = client.spot.get_fills_by_id(order_id=sell_order["orderId"]).json()["result"]
+    print(f"found {len(fills_by_order_id)} fills by order id")
+
+    all_fills = client.spot.get_fills().json()["result"]
+    print(f"found {len(all_fills)} fills for all orders")
+
 
 def perps(client: Client) -> None:
     """Demonstrate some perps trading functionality."""
@@ -118,6 +140,30 @@ def perps(client: Client) -> None:
     filled_size = Decimal(order_status["filledSize"])
     print(f"{filled_size=}")
 
+    # cause a trade and query fills
+    custom_id = f"demo{int(time.time_ns())}"
+    buy_order = client.perps.add_order(
+        "BTC-USD.P",
+        enclave.models.BUY,
+        None,
+        buy_size,
+        order_type=enclave.models.MARKET,
+        client_order_id=custom_id,
+    ).json()["result"]
+    print(f"{buy_order=}")
+
+    positions = client.perps.get_positions().json()["result"]
+    print(f"{positions=}")
+
+    fills_by_custom_id = client.perps.get_fills_by_id(client_order_id=custom_id).json()["result"]
+    print(f"found {len(fills_by_custom_id)} fills by custom id")
+
+    fills_by_order_id = client.perps.get_fills_by_id(order_id=buy_order["orderId"]).json()["result"]
+    print(f"found {len(fills_by_order_id)} fills by order id")
+
+    all_fills = client.perps.get_fills().json()["result"]
+    print(f"found {len(all_fills)} fills for all orders")
+
     margin_withdraw = client.perps.transfer("USDC", Decimal(-1)).json()
     print(f"{margin_withdraw=}")
     margin_balance = client.perps.get_balance().json()
@@ -163,6 +209,15 @@ def cross(client: Client) -> None:
     order_status = client.cross.get_order(customer_order_id=custom_id).json()["result"]
     print(f"{order_status=}")
     print(f"amount filled: {order_status['filledSize']=}, status: {order_status['status']=}")
+
+    fills_by_custom_id = client.cross.get_fills_by_id(customer_order_id=custom_id).json()["result"]
+    print(f"found {len(fills_by_custom_id)} fills by custom id")
+
+    fills_by_order_id = client.cross.get_fills_by_id(internal_order_id=buy_order["result"]["internalOrderId"]).json()["result"]
+    print(f"found {len(fills_by_order_id)} fills by order id")
+
+    all_fills = client.cross.get_fills().json()["result"]
+    print(f"found {len(all_fills)} fills for all orders")
 
 
 if __name__ == "__main__":

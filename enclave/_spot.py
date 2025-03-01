@@ -3,7 +3,7 @@ spot implements the Spot specific API and calls an instance of BaseClient to mak
 """
 import json
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 
 from . import _baseclient
 from .models import Res
@@ -227,7 +227,7 @@ class Spot:
     def add_order(self, params: OrderParams) -> Res:
         """Creates a spot order.
 
-        Limit or market orders can be created by changing the “type” field.
+        Limit or market orders can be created by changing the "type" field.
         For market orders, the quantity specified must always be in terms of the quantity given up,
         so for sells specify a (base) `size`, and for buys specify `quoteSize`
 
@@ -242,8 +242,8 @@ class Spot:
 
         - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
-        - order_type: The order type, “limit” or “market” (e.g. "limit"). Optional, defaults to “limit”.
-        - time_in_force: “GTC” or “IOC” - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to “GTC”.
+        - order_type: The order type, "limit" or "market" (e.g. "limit"). Optional, defaults to "limit".
+        - time_in_force: "GTC" or "IOC" - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to "GTC".
         - post_only: Whether an order should be prohibited from filling on placement (e.g. True). Optional, defaults to False.
         """
 
@@ -262,7 +262,7 @@ class Spot:
 
         return self.bc.post("/v1/orders", body=json.dumps(body_filtered))
 
-    def batch_add_order(self, orders: list[OrderParams]) -> list[Res]:
+    def batch_add_order(self, orders: List[OrderParams]) -> Res:
         """Creates multiple spot orders in a single request.
 
         `POST /v1/orders/batch`
@@ -271,7 +271,7 @@ class Spot:
         - orders: A list of orders. Field semantics are same as in add_order.
         """
 
-        body = {"orders": []}
+        body: dict = {"orders": []}
         for order in orders:
             order_body = {
                 "market": order.market,

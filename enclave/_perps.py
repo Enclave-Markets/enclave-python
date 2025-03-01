@@ -3,7 +3,7 @@ Perps contains the Perps specific API and calls an instance of BaseClient to mak
 """
 import json
 from decimal import Decimal
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 from . import _baseclient, models
 from .models import Res
@@ -470,7 +470,7 @@ class Perps:
 
         return self.bc.post("/v1/perps/orders", body=json.dumps(body_filtered))
 
-    def batch_add_order(self, orders: list[OrderParams]) -> list[Res]:
+    def batch_add_order(self, orders: List[OrderParams]) -> Res:
         """Creates multiple perps orders in a single request.
 
         `POST /v1/perps/orders/batch`
@@ -479,7 +479,7 @@ class Perps:
         - orders: A list of orders. Field semantics are same as in add_order.
         """
 
-        body = {"orders": []}
+        body: dict = {"orders": []}
         for order in orders:
             order_body = {
                 "market": order.market,

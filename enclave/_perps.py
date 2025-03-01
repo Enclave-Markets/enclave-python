@@ -423,22 +423,21 @@ class Perps:
 
         return self.bc.delete(f"/v1/perps/orders/{path}")
 
-    def add_order(
-        self,
-        market: str,
-        side: str,
-        price: Optional[Decimal] = None,
-        size: Optional[Decimal] = None,
-        *,
-        client_order_id: Optional[str] = None,
-        quote_size: Optional[Decimal] = None,
-        order_type: Optional[str] = None,
-        time_in_force: Optional[str] = None,
-        post_only: Optional[bool] = None,
-    ) -> Res:
-        """Creates an order.
+    class OrderParams:
+        market: str
+        side: str
+        price: Optional[Decimal] = None
+        size: Optional[Decimal] = None
+        client_order_id: Optional[str] = None
+        quote_size: Optional[Decimal] = None
+        order_type: Optional[str] = None
+        time_in_force: Optional[str] = None
+        post_only: Optional[bool] = None
 
-        Limit or market orders can be created by changing the “type” field.
+    def add_order(self, params: OrderParams) -> Res:
+        """Creates a perps order.
+
+        Limit or market orders can be created by changing the "type" field.
         For market orders, the quantity specified must always be in terms of the quantity given up,
         so for sells specify a (base) `size`, and for buys specify `quoteSize`
 
@@ -447,28 +446,52 @@ class Perps:
         Request Body Parameters:
         - market: trading market pair (e.g. AVAX-USDC).
         - side: buy or sell (e.g. "buy").
-
-        - size: the amount of base currency to buy or sell.  Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
         - price: limit price. Must be aligned with quoteIncrement from /v1/markets (e.g. 1.55). (Not for market orders).
-
+        - size: the amount of base currency to buy or sell. Must be aligned with baseIncrement from /v1/markets (e.g. 20.30). (Not for market sell)
         - client_order_id: Order id provided by client. Alphanumeric and underscores and dashes. <= 64 characters (e.g. "order123"). Optional.
         - quote_size: Order quantity based in quote currency. Can only be set for market order buys (e.g. 13.0967). Optional.
-        - order_type: The order type, “limit” or “market” (e.g. "limit"). Optional, defaults to “limit”.
-        - time_in_force: “GTC” or “IOC” - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to “GTC”.
+        - order_type: The order type, "limit" or "market" (e.g. "limit"). Optional, defaults to "limit".
+        - time_in_force: "GTC" or "IOC" - Good until canceled / Immediate or cancel. Cannot be set for market orders (e.g. "IOC"). Optional, defaults to "GTC".
         - post_only: Whether an order should be prohibited from filling on placement (e.g. True). Optional, defaults to False.
         """
 
         body = {
-            "market": market,
-            "price": str(price) if price else None,
-            "side": side,
-            "size": str(size) if size else None,
-            "clientOrderId": client_order_id,
-            "quoteSize": str(quote_size) if quote_size else None,
-            "type": order_type,
-            "timeInForce": time_in_force,
-            "postOnly": post_only,
+            "market": params.market,
+            "price": str(params.price) if params.price else None,
+            "side": params.side,
+            "size": str(params.size) if params.size else None,
+            "clientOrderId": params.client_order_id,
+            "quoteSize": str(params.quote_size) if params.quote_size else None,
+            "type": params.order_type,
+            "timeInForce": params.time_in_force,
+            "postOnly": params.post_only,
         }
         body_filtered = {k: v for k, v in body.items() if v is not None}  # filter None
 
         return self.bc.post("/v1/perps/orders", body=json.dumps(body_filtered))
+
+    def batch_add_order(self, orders: list[OrderParams]) -> list[Res]:
+        """Creates multiple perps orders in a single request.
+
+        `POST /v1/perps/orders/batch`
+
+        Request Body Parameters:
+        - orders: A list of orders. Field semantics are same as in add_order.
+        """
+
+        body = {"orders": []}
+        for order in orders:
+            order_body = {
+                "market": order.market,
+                "price": str(order.price) if order.price is not None else None,
+                "side": order.side,
+                "size": str(order.size) if order.size is not None else None,
+                "clientOrderId": order.client_order_id,
+                "quoteSize": str(order.quote_size) if order.quote_size is not None else None,
+                "type": order.order_type,
+                "timeInForce": order.time_in_force,
+                "postOnly": order.post_only,
+            }
+            body["orders"].append({k: v for k, v in order_body.items() if v is not None})  # filter None
+
+        return self.bc.post("/v1/perps/orders/batch", body=json.dumps(body))

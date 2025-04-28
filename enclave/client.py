@@ -38,6 +38,13 @@ class Client:
         self.cross = _cross.Cross(self.bc)
         self.perps = _perps.Perps(self.bc)
         self.spot = _spot.Spot(self.bc)
+        
+        # Fetch and store account ID during initialization
+        response = self.authed_hello()
+        if response.ok:
+            self.account_id = response.json()["result"]
+        else:
+            raise ValueError(f"Failed to auth and fetch account ID: {response.text}")
 
     @classmethod
     def from_api_file(cls, api_path: str, base_url: str) -> Client:
@@ -192,19 +199,31 @@ class Client:
             body["end_time"] = end_secs
         return self.bc.post("/v0/wallet/withdrawals/csv", body=json.dumps(body))
 
-    def provision_address(self, coin: str) -> Res:
-        """Provisions an address for deposit of an asset
+    def provision_address(self, coin: str, wallet: Optional[str] = None) -> Res:
+        """Provisions an address for deposit of an asset, wallet is optional and can be main or margin
 
         `POST /v0/provision_address`
 
         Request:
-        `{"symbol": "AVAX"}`"""
+        ```
+        {
+            "symbol": "AVAX",
+            "deposit_destination": {
+                "id": "327719837281695541",
+                "wallet": "main"
+            }
+        }
+        ```"""
 
-        body = f'{{ "symbol": "{coin}" }}'
-        return self.bc.post("/v0/provision_address", body=body)
+        body = {"symbol": coin}
+        if wallet is not None:
+            if wallet not in ["main", "margin"]:
+                raise ValueError("wallet must be either 'main' or 'margin'")
+            body["deposit_destination"] = {"id": self.account_id, "wallet": wallet}
+        return self.bc.post("/v0/provision_address", body=json.dumps(body))
 
-    def withdraw(self, to_address: str, amount: Union[str, Decimal], custom_id: str, coin: str) -> Res:
-        """Initiates a withdrawal
+    def withdraw(self, to_address: str, amount: Union[str, Decimal], custom_id: str, coin: str, wallet: Optional[str] = None) -> Res:
+        """Initiates a withdrawal, wallet is optional and can be main or margin
 
         `POST /v0/withdraw`
 
@@ -214,7 +233,11 @@ class Client:
             "address": "0x074B94d653CBf65D1Bc484F6D41897b38250fbfF",
             "amount": "10",
             "customer_withdrawal_id": "abc123",
-            "symbol": "AVAX"
+            "symbol": "AVAX",
+            "from": {
+                "id": "327719837281695541",
+                "wallet": "main"
+            }
         }
         ```"""
 
@@ -224,4 +247,8 @@ class Client:
             "customer_withdrawal_id": custom_id,
             "symbol": coin,
         }
+        if wallet is not None:
+            if wallet not in ["main", "margin"]:
+                raise ValueError("wallet must be either 'main' or 'margin'")
+            body["from"] = {"id": self.account_id, "wallet": wallet}
         return self.bc.post("/v0/withdraw", body=json.dumps(body))

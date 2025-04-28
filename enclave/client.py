@@ -39,7 +39,8 @@ class Client:
         self.perps = _perps.Perps(self.bc)
         self.spot = _spot.Spot(self.bc)
         
-        # Fetch and store account ID during initialization
+        self.wait_until_ready()
+
         response = self.authed_hello()
         if response.ok:
             self.account_id = response.json()["result"]

@@ -216,7 +216,7 @@ class Client:
         }
         ```"""
 
-        body = {"symbol": coin}
+        body: dict[str, Union[str, dict[str, str]]] = {"symbol": coin}
         if wallet is not None:
             if wallet not in ["main", "margin"]:
                 raise ValueError("wallet must be either 'main' or 'margin'")
@@ -242,7 +242,7 @@ class Client:
         }
         ```"""
 
-        body = {
+        body: dict[str, Union[str, dict[str, str]]] = {
             "address": to_address,
             "amount": str(amount),
             "customer_withdrawal_id": custom_id,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "enclave"
-version = "0.3.2"
+version = "0.3.3"
 description = "Connect to Enclave Markets API"
 authors = ["benclave <ben@enclave.market>"]
 readme = "README.md"

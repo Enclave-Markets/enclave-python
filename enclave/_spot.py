@@ -287,3 +287,17 @@ class Spot:
             body["orders"].append({k: v for k, v in order_body.items() if v is not None})  # filter None
 
         return self.bc.post("/v1/orders/batch", body=json.dumps(body))
+
+
+    def get_ticker(
+        self, sparkline: Optional[bool] = None
+    ) -> Res:
+        """
+        Return ticker data, such as 24hr market data, for each available Spot market.
+
+        `GET /v1/ticker`
+        """
+        query = {
+            "sparkline": sparkline,
+        }
+        return self.bc.get("/v1/ticker", params=query)

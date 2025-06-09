@@ -495,3 +495,19 @@ class Perps:
             body["orders"].append({k: v for k, v in order_body.items() if v is not None})  # filter None
 
         return self.bc.post("/v1/perps/orders/batch", body=json.dumps(body))
+
+    def get_contracts(
+        self, sparkline: Optional[bool] = None
+    ) -> Res:
+        """
+        Return contract data, such as 24hr market data, for each available Perpetual market.
+
+        `GET /v1/perps/contracts`
+
+        Request Body Parameters:
+        - sparkline: Whether to include sparkline data for each market in the response
+        """
+        query = {
+            "sparkline": sparkline,
+        }
+        return self.bc.get("/v1/perps/contracts", params=query)

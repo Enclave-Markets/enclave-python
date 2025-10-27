@@ -6,7 +6,7 @@ authors = ["benclave <ben@enclave.market>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8"
 requests = "^2.31.0"
 websockets = ">=12.0"
 

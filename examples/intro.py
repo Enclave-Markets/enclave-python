@@ -107,7 +107,7 @@ if __name__ == "__main__":
     API_SECRET = str(os.getenv("enclave_secret"))
 
     # create a client
-    enclave_client = Client(API_KEY, API_SECRET, enclave.models.SANDBOX_PERMISSIONLESS)
+    enclave_client = Client(API_KEY, API_SECRET, enclave.models.SANDBOX)
     if not enclave_client.wait_until_ready():
         raise RuntimeError("Enclave not connecting.")
     authed_hello = enclave_client.authed_hello().json()

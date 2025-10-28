@@ -44,7 +44,7 @@ async def main() -> None:
     ws = WebSocketClient(
         API_KEY,
         API_SECRET,
-        "wss://api-sandbox.enclave.market/ws",
+        "wss://api-sandbox.enclave.trade/ws",
         on_connect=lambda: print("On Connect"),
         on_auth=lambda: print("On Auth"),
         on_error=lambda x: print(f"On Error: {x}"),

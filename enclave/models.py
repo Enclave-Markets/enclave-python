@@ -10,12 +10,12 @@ DELETE: Final[str] = "DELETE"
 PUT: Final[str] = "PUT"
 VERBS: Final[Set[str]] = {GET, POST, DELETE, PUT}
 
-DEV: Final[str] = "https://api-dev.enclavemarket.dev"
+DEV: Final[str] = "https://api-dev-permissionless.enclavemarket.dev"
 DEV_PERMISSIONLESS: Final[str] = "https://api-dev-permissionless.enclavemarket.dev"
 STAGING: Final[str] = "https://api-staging.enclavemarket.dev"
-SANDBOX: Final[str] = "https://api-sandbox.enclave.market"
+SANDBOX: Final[str] = "https://api-sandbox.enclave.trade"
 SANDBOX_PERMISSIONLESS: Final[str] = "https://api-sandbox.enclave.trade"
-PROD: Final[str] = "https://api.enclave.market"
+PROD: Final[str] = "https://api.enclave.trade"
 PROD_PERMISSIONLESS: Final[str] = "https://api.enclave.trade"
 
 BUY: Final[str] = "buy"

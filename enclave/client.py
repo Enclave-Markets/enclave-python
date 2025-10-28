@@ -32,7 +32,7 @@ class Client:
     or from a file using `from_api_file` with the key id on the first line and the secret on the second line.
     """
 
-    def __init__(self, api_key: str, api_secret: str, base_url: str = models.PROD):
+    def __init__(self, api_key: str, api_secret: str, base_url: str = models.PROD_PERMISSIONLESS):
         self.bc = _baseclient.BaseClient(api_key, api_secret, base_url)
 
         self.cross = _cross.Cross(self.bc)

@@ -32,7 +32,7 @@ pip install enclave
 from enclave.client import Client
 import enclave.models
 
-client = Client("", "", enclave.models.PROD)
+client = Client("", "", enclave.models.PROD_PERMISSIONLESS)
 print(client.wait_until_ready()) # should print True
 ```
 

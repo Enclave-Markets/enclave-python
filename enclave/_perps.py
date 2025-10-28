@@ -3,6 +3,7 @@ Perps contains the Perps specific API and calls an instance of BaseClient to mak
 """
 import json
 from decimal import Decimal
+from dataclasses import dataclass
 from typing import Optional, Union, List
 
 from . import _baseclient, models
@@ -423,6 +424,7 @@ class Perps:
 
         return self.bc.delete(f"/v1/perps/orders/{path}")
 
+    @dataclass
     class OrderParams:
         market: str
         side: str
